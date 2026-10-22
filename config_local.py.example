@@ -10,6 +10,13 @@ config_local.py 已被 .gitignore 忽略，不会被提交到 Git。
 也可以完全不用这个文件，改用环境变量：
     set WECHATBOT_API_KEY=sk-xxx
 或者直接在网页控制台「🧠 AI 大脑」面板里填（推荐，最省事）。
+
+取值优先级（只对默认大脑 default_cloud 生效，运行时持续生效）：
+    环境变量 WECHATBOT_API_KEY > 本文件的 API_KEY > models_config.json 里网页存的
+注意：
+    - 本文件里的 API_KEY / BASE_URL / MODEL 会被环境变量覆盖。
+    - 网页里自己新建的其他大脑（本地 Ollama 等）不受这里影响。
+    - 本文件永远不会被提交到 Git。
 """
 
 # 主对话模型（OpenAI 兼容接口：DeepSeek / 硅基流动 / Moonshot / 官方 OpenAI 都行）

@@ -124,6 +124,134 @@ step("Flask 路由", lambda: "%d 条" % len(list(main.app.url_map.iter_rules()))
 step("llm provider", lambda: "model=%s" % main.llm.get_active_provider_info().get("model"))
 step("llm providers", lambda: "%d 个" % len(main.llm.list_all_providers()))
 
+# ---- 配置优先级：环境变量 > config_local.py > models_config.json ----
+# 注意：from llm import config_manager 拿到的是 llm/__init__.py 里导出的单例对象，
+# 不是 llm/config_manager.py 模块，所以这里用 importlib 直接拿模块。
+import importlib as _importlib  # noqa: E402
+_cm = _importlib.import_module("llm.config_manager")
+
+
+class _EnvOverride(object):
+    """临时改环境变量 / config_local，退出时原样还原。"""
+
+    def __init__(self, env=None, local=None):
+        self._env = env or {}
+        self._local = local or {}
+        self._old_env = {}
+        self._old_local = None
+        self._had_local = False
+
+    def __enter__(self):
+        for k, v in self._env.items():
+            self._old_env[k] = os.environ.get(k)
+            if v is None:
+                os.environ.pop(k, None)
+            else:
+                os.environ[k] = v
+        try:
+            import config_local as _cl
+            self._old_local = _cl
+            self._had_local = True
+        except Exception:
+            self._old_local = None
+            self._had_local = False
+        if self._local:
+            import types
+            mod = types.ModuleType("config_local")
+            for k, v in self._local.items():
+                setattr(mod, k, v)
+            sys.modules["config_local"] = mod
+        return self
+
+    def __exit__(self, *exc):
+        for k, v in self._old_env.items():
+            if v is None:
+                os.environ.pop(k, None)
+            else:
+                os.environ[k] = v
+        if self._had_local:
+            sys.modules["config_local"] = self._old_local
+        else:
+            sys.modules.pop("config_local", None)
+        return False
+
+
+def _overlay(pid, data, env=None, local=None):
+    with _EnvOverride(env=env, local=local):
+        return _cm.apply_env_local_overlay(pid, data)
+
+
+step("config_priority.环境变量盖过存档值", lambda: (
+    _overlay("default_cloud", {"api_key": "sk-old", "model": "old-model"},
+             env={"WECHATBOT_API_KEY": "sk-env-test-000",
+                  "WECHATBOT_MODEL": "env-model-x"},
+             local={"API_KEY": "sk-local-test-000", "MODEL": "local-model"})
+    == {"api_key": "sk-env-test-000", "model": "env-model-x"}
+    or "环境变量未生效!"))
+
+step("config_priority.config_local 盖过存档值", lambda: (
+    _overlay("default_cloud", {"api_key": "sk-old", "model": "old-model"},
+             env={}, local={"API_KEY": "sk-local-test-000", "MODEL": "local-model"})
+    == {"api_key": "sk-local-test-000", "model": "local-model"}
+    or "config_local 未生效!"))
+
+step("config_priority.都没配时用存档值", lambda: (
+    _overlay("default_cloud", {"api_key": "sk-saved", "model": "saved-model"},
+             env={}, local={})
+    == {"api_key": "sk-saved", "model": "saved-model"}
+    or "存档值被覆盖了!"))
+
+step("config_priority.自定义Provider不吃环境变量", lambda: (
+    _overlay("my_own", {"api_key": "sk-saved", "model": "m"},
+             env={"WECHATBOT_API_KEY": "sk-env-test-000"}, local={})
+    == {"api_key": "sk-saved", "model": "m"}
+    or "自定义 Provider 被环境变量污染了!"))
+
+step("config_priority.api_key_source 识别", lambda: (
+    _cm.api_key_source("my_own", "sk-saved") == "saved"
+    and _cm.api_key_source("my_own", "") == "none"
+    or "source 判定错误!"))
+
+# ---- 密钥绝不外泄 ----
+step("secret.list_all_providers 不含密钥明文", lambda: (
+    all(not p.get("api_key") for p in main.llm.list_all_providers())
+    or "仍有明文!"))
+
+step("secret.返回体带 has_api_key 标记", lambda: (
+    all("has_api_key" in p for p in main.llm.list_all_providers())
+    or "缺 has_api_key"))
+
+step("secret._mask_provider_secrets 清空明文", lambda: (
+    main._mask_provider_secrets({"api_key": "sk-leak-test", "name": "x"})["api_key"] == ""
+    or "掩码失败!"))
+
+
+def _check_empty_key_keeps_old():
+    """空密钥保存必须保留原值；测完把 models_config.json 原样还原。"""
+    path = _cm.MODELS_CONFIG_FILE
+    backup = None
+    if os.path.exists(path):
+        with open(path, "rb") as f:
+            backup = f.read()
+    try:
+        old = _cm.config_manager.save_provider(
+            "default_cloud",
+            {"name": "云端大模型 (默认)", "provider_type": "openai",
+             "base_url": "https://api.deepseek.com/v1", "model": "deepseek-chat",
+             "api_key": "", "temperature": 0.8, "max_tokens": 120},
+        ).api_key
+        if old == "":
+            raise AssertionError("空密钥把原值冲掉了!")
+        return "原值已保留"
+    finally:
+        if backup is not None:
+            with open(path, "wb") as f:
+                f.write(backup)
+            _cm.config_manager.load()
+
+
+step("secret.save 空密钥保留原值", _check_empty_key_keeps_old)
+
 # ---- 监听名单：昵称不能被截断（老 bug：entry[0] 把「昵称」变成「昵」）----
 step("parse_listen_entry(字符串)", lambda: repr(main.parse_listen_entry(u"测试昵称")))
 step("parse_listen_entry(字典)", lambda: repr(main.parse_listen_entry({"nickname": u"测试昵称"})))

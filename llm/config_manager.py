@@ -18,6 +18,62 @@ MODELS_CONFIG_FILE = os.path.join(BASE_DIR, "models_config.json")
 
 _config_lock = threading.Lock()
 
+# 由 config.py 播种的「默认大脑」ID。只有它会吃环境变量 / config_local.py 的覆盖，
+# 用户自己在网页里新建的 Provider 一律以 models_config.json 里存的值为准。
+DEFAULT_PROVIDER_ID = "default_cloud"
+
+
+def _env_or_local_raw(name: str) -> str:
+    """只查「环境变量 WECHATBOT_<NAME>」和「config_local.py 的 <NAME>」，不带任何默认值。
+
+    这里刻意不读 config.py 里的兜底默认值（比如默认的 deepseek 地址），
+    否则那些默认值会盖掉用户在网页里认真填好的配置。
+
+    返回空字符串 = 没设置。
+    """
+    val = os.environ.get("WECHATBOT_" + name)
+    if val and val.strip():
+        return val.strip()
+    try:
+        import config_local  # noqa: F401  本地私有配置，不进 Git
+        val = getattr(config_local, name, "") or ""
+        if isinstance(val, str) and val.strip():
+            return val.strip()
+    except Exception:
+        pass
+    return ""
+
+
+def api_key_source(provider_id: str, stored_key: str) -> str:
+    """密钥当前来自哪里：env / config_local / saved / none。用于前端提示。"""
+    if provider_id == DEFAULT_PROVIDER_ID:
+        if os.environ.get("WECHATBOT_API_KEY", "").strip():
+            return "env"
+        if _env_or_local_raw("API_KEY"):
+            return "config_local"
+    if (stored_key or "").strip():
+        return "saved"
+    return "none"
+
+
+def apply_env_local_overlay(provider_id: str, p_data: Dict[str, Any]) -> Dict[str, Any]:
+    """把「环境变量 > config_local.py」的密钥/地址/模型覆盖到默认 Provider 上。
+
+    优先级：环境变量 > config_local.py > models_config.json（网页里存的）> 空。
+    只对 default_cloud 生效——它才是 config.py 负责播种的那个默认大脑。
+    返回新字典，不会改动原始配置对象。
+    """
+    if provider_id != DEFAULT_PROVIDER_ID:
+        return p_data
+    out = dict(p_data or {})
+    for field, env_name in (("api_key", "API_KEY"),
+                            ("base_url", "BASE_URL"),
+                            ("model", "MODEL")):
+        val = _env_or_local_raw(env_name)
+        if val:
+            out[field] = val
+    return out
+
 
 def get_default_models_config() -> Dict[str, Any]:
     legacy_api_key = getattr(legacy_config, "API_KEY", "")
@@ -140,6 +196,8 @@ class LLMConfigManager:
                     return LLMConfig.from_dict(get_default_models_config()["providers"]["default_cloud"])
 
             p_data["id"] = act_id
+            # 环境变量 / config_local.py 优先级高于 models_config.json 里存的值
+            p_data = apply_env_local_overlay(act_id, p_data)
             return LLMConfig.from_dict(p_data)
 
     def list_providers(self) -> List[Dict[str, Any]]:
@@ -150,9 +208,12 @@ class LLMConfigManager:
                 item = dict(cfg)
                 item["id"] = pid
                 item["is_active"] = (pid == act_id)
-                # 不把密钥明文吐给前端：只告诉前端「有没有配」，
+                # 环境变量 / config_local.py 优先级高于这里存的值
+                item = apply_env_local_overlay(pid, item)
+                # 不把密钥明文吐给前端：只告诉前端「有没有配」、「配在哪」，
                 # 真正的密钥留在服务端，保存时空值即表示「沿用原来的」。
-                item["has_api_key"] = bool(cfg.get("api_key"))
+                item["has_api_key"] = bool(item.get("api_key"))
+                item["api_key_source"] = api_key_source(pid, item.get("api_key", ""))
                 item["api_key"] = ""
                 res.append(item)
             return res

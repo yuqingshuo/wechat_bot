@@ -3489,13 +3489,27 @@ def _mask_provider_secrets(cfg):
 
     Web 控制台只监听 127.0.0.1，但密钥明文仍然没必要出现在 HTTP 响应里：
     浏览器 DevTools、代理、截图都可能把它带出去。
-    前端只需要知道「配没配」，所以只回一个 has_api_key 标记。
+    前端只需要知道「配没配」和「配在哪」，所以只回 has_api_key / api_key_source 标记。
+
+    ⚠️ 这里必须是幂等的：上游 list_all_providers() 已经把 api_key 清空并算好
+    has_api_key 了。如果这里再拿（已经被清空的）api_key 重算一次，
+    就会把「已配置」误报成「没配置」。所以只在字段缺失时才补算。
     """
     if not isinstance(cfg, dict):
         return cfg
     out = dict(cfg)
-    out["has_api_key"] = bool(out.get("api_key"))
+    raw_key = out.get("api_key") or ""
+    if "has_api_key" not in out:
+        out["has_api_key"] = bool(raw_key)
     out["api_key"] = ""
+    if "api_key_source" not in out:
+        pid = out.get("id") or ""
+        try:
+            import importlib as _il
+            _cm = _il.import_module("llm.config_manager")
+            out["api_key_source"] = _cm.api_key_source(pid, raw_key)
+        except Exception:
+            out["api_key_source"] = "saved" if out["has_api_key"] else "none"
     return out
 
 

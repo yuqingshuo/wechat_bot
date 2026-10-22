@@ -78,6 +78,14 @@ export WECHATBOT_MODEL="deepseek-chat"
 
 **取值优先级：环境变量 > `config_local.py` > `models_config.json`（网页里存的）> 空**
 
+> 这条优先级作用于**默认大脑**（`default_cloud`，也就是程序第一次启动时用 `config.py` 播种的那一个）的
+> `API_KEY` / `BASE_URL` / `MODEL` 三项，且**在运行时持续生效**——改了环境变量重启即可换密钥。
+> 你在网页里**自己新建**的其他大脑（本地 Ollama、Llama.cpp 等）不受影响，只认 `models_config.json` 里存的值。
+>
+> 网页「🧠 AI 大脑」面板会显示当前密钥来自哪里（`env` / `config_local` / `saved`），
+> 并且**永远不回显密钥明文**。当密钥来自环境变量或 `config_local.py` 时，
+> 输入框里填的值不会生效（优先级更高），面板会给出提示。
+
 ### 4. 启动
 
 **Windows**：双击 `一键启动.bat`
