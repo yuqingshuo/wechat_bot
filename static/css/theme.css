@@ -47,6 +47,7 @@ html[data-theme="dark"] .bot-status,html[data-theme="dark"] .auto-status{backgro
 html[data-theme="dark"] .stage-threshold{background:#232b3b;color:#9aa5b8}
 html[data-theme="dark"] .progress-bar-bg{background:#2b3446}
 html[data-theme="dark"] .preset-job{border-color:var(--line)}
+html[data-theme="dark"] .preset-disc{background:var(--bg-soft);color:#8b97ab}
 html[data-theme="dark"] .form-split{border-color:var(--line);color:#c3ccd9}
 html[data-theme="dark"] .btn-ghost{background:var(--bg-card)}
 html[data-theme="dark"] .log-box{background:#0a0e15}
