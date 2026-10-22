@@ -1,0 +1,78 @@
+/* ================= 深色模式 + 响应式收尾（theme.css，最后加载，优先级最高） ================= */
+:root{
+  --bg-card:#fff; --bg-soft:#f8fafc; --bg-input:#fbfcfe;
+  --shadow-lg:0 16px 40px rgba(26,34,51,.10);
+}
+html[data-theme="dark"]{
+  --ink:#e8edf5; --muted:#9aa5b8; --line:#2b3446;
+  --bg1:#10151f; --bg2:#0d1117; --warm:#2a2016;
+  --brand-soft:#0e2b1d; --radius:18px; --shadow:0 10px 30px rgba(0,0,0,.45);
+  --bg-card:#171d29; --bg-soft:#1c2331; --bg-input:#202839;
+  color-scheme:dark;
+}
+html[data-theme="dark"] body{
+  background:linear-gradient(180deg,#0d1117 0%,#10151f 320px,#0f1420 100%);
+  color:var(--ink);
+}
+html[data-theme="dark"] .topbar{background:rgba(23,29,41,.92)}
+html[data-theme="dark"] .card,
+html[data-theme="dark"] details.fold{background:var(--bg-card);border-color:var(--line)}
+html[data-theme="dark"] details.fold .card{background:transparent;border:none}
+html[data-theme="dark"] .card:hover{box-shadow:0 16px 40px rgba(0,0,0,.5)}
+html[data-theme="dark"] input[type="text"],html[data-theme="dark"] textarea,
+html[data-theme="dark"] select,html[data-theme="dark"] input[type="number"]{
+  background:var(--bg-input);border-color:var(--line);color:var(--ink);
+}
+html[data-theme="dark"] input[type="text"]:focus,html[data-theme="dark"] textarea:focus,
+html[data-theme="dark"] select:focus{border-color:var(--brand);background:#232c40}
+html[data-theme="dark"] label{color:#c3ccd9}
+html[data-theme="dark"] .stat,html[data-theme="dark"] .switch-card,
+html[data-theme="dark"] .t-chip,html[data-theme="dark"] .contact-grid,
+html[data-theme="dark"] .step-num{background:var(--bg-soft)}
+html[data-theme="dark"] .stat b,html[data-theme="dark"] .switch-card .sw-txt b,
+html[data-theme="dark"] .contact-chip .c-name,html[data-theme="dark"] .user-name,
+html[data-theme="dark"] .stage-name,html[data-theme="dark"] .pv-name{color:var(--ink)}
+html[data-theme="dark"] .contact-chip,html[data-theme="dark"] .preset-card,
+html[data-theme="dark"] .stage-card,html[data-theme="dark"] .user-item,
+html[data-theme="dark"] .pv-box,html[data-theme="dark"] .target-panel{background:var(--bg-card);border-color:var(--line)}
+html[data-theme="dark"] .pv-text{background:var(--bg-input);border-color:var(--line);color:#c9d2e0}
+html[data-theme="dark"] .target-panel{background:#12241a;border-color:#1d4d33}
+html[data-theme="dark"] details.inner{background:var(--bg-soft)}
+html[data-theme="dark"] .tip{background:#2a2016;border-color:#7c4a12;color:#f5c98a}
+html[data-theme="dark"] .tip.green{background:#0e2b1d;border-color:#1d6b44;color:#7fe3ae}
+html[data-theme="dark"] .tip.blue{background:#141b3d;border-color:#3b4a9e;color:#b9c4ff}
+html[data-theme="dark"] .wx-status{background:var(--bg-soft)}
+html[data-theme="dark"] .bot-pill.off{background:#232b3b;color:#9aa5b8}
+html[data-theme="dark"] .bot-status,html[data-theme="dark"] .auto-status{background:var(--bg-soft);border-color:var(--line);color:#b7c1d1}
+html[data-theme="dark"] .stage-threshold{background:#232b3b;color:#9aa5b8}
+html[data-theme="dark"] .progress-bar-bg{background:#2b3446}
+html[data-theme="dark"] .preset-job{border-color:var(--line)}
+html[data-theme="dark"] .form-split{border-color:var(--line);color:#c3ccd9}
+html[data-theme="dark"] .btn-ghost{background:var(--bg-card)}
+html[data-theme="dark"] .log-box{background:#0a0e15}
+html[data-theme="dark"] .footer-note{color:#7d8798}
+html[data-theme="dark"] ::-webkit-scrollbar-thumb{background:#3a465c;border:2px solid transparent;background-clip:content-box}
+
+/* 顶栏主题按钮 + 返回顶部按钮 */
+.theme-btn{background:#f1f5f9;border:1px solid var(--line);color:#475569;font-size:13px;font-weight:700;
+  padding:7px 14px;border-radius:999px;cursor:pointer;white-space:nowrap;transition:background .15s,transform .12s}
+.theme-btn:hover{background:#e2e8f0}
+.theme-btn:active{transform:scale(.96)}
+html[data-theme="dark"] .theme-btn{background:#232b3b;border-color:var(--line);color:#c3ccd9}
+.back-top{position:fixed;right:22px;bottom:26px;width:46px;height:46px;border-radius:50%;border:1px solid var(--line);
+  background:#fff;color:var(--brand-dark);font-size:20px;font-weight:800;cursor:pointer;z-index:999;
+  box-shadow:0 10px 26px rgba(15,23,42,.18);opacity:0;pointer-events:none;transform:translateY(10px);
+  transition:opacity .25s,transform .25s,background .15s}
+.back-top.show{opacity:1;pointer-events:auto;transform:none}
+.back-top:hover{background:var(--brand-soft)}
+html[data-theme="dark"] .back-top{background:#1c2331;color:#7fe3ae}
+
+/* 小屏收尾：顶栏按钮不挤、统计两列、好友卡一列 */
+@media(max-width:560px){
+  .topbar-inner{flex-wrap:wrap}
+  .topbar-right{margin-left:0;width:100%;justify-content:flex-start}
+  .stat-grid{grid-template-columns:repeat(2,1fr)}
+  .contact-grid{grid-template-columns:1fr}
+  .preset-grid{grid-template-columns:1fr}
+  .hero-actions .btn-white,.hero-actions .btn-ghost{flex:1;text-align:center}
+}

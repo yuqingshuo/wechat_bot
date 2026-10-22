@@ -1,0 +1,44 @@
+{
+  "active_provider": "default_cloud",
+  "providers": {
+    "default_cloud": {
+      "id": "default_cloud",
+      "name": "云端大模型 (默认)",
+      "provider_type": "openai",
+      "base_url": "https://api.deepseek.com/v1",
+      "api_key": "",
+      "model": "deepseek-chat",
+      "temperature": 0.8,
+      "max_tokens": 120,
+      "timeout": 45.0,
+      "max_retries": 2,
+      "extra": {}
+    },
+    "local_ollama": {
+      "id": "local_ollama",
+      "name": "本地 Ollama",
+      "provider_type": "ollama",
+      "base_url": "http://127.0.0.1:11434",
+      "api_key": "",
+      "model": "qwen2.5:7b",
+      "temperature": 0.8,
+      "max_tokens": 120,
+      "timeout": 60.0,
+      "max_retries": 1,
+      "extra": {}
+    },
+    "local_llamacpp": {
+      "id": "local_llamacpp",
+      "name": "本地 llama.cpp Server",
+      "provider_type": "llamacpp",
+      "base_url": "http://127.0.0.1:8080/v1",
+      "api_key": "",
+      "model": "default",
+      "temperature": 0.7,
+      "max_tokens": 120,
+      "timeout": 60.0,
+      "max_retries": 1,
+      "extra": {}
+    }
+  }
+}
