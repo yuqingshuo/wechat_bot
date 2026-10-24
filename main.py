@@ -3316,6 +3316,73 @@ def api_get_contacts():
         logger.error(f"获取好友列表出错: {e}", exc_info=True)
         return jsonify({"ok": False, "msg": str(e), "contacts": [], "logs": []})
 
+@app.route('/api/chat/stream', methods=['GET'])
+def api_chat_stream():
+    """「跟随聊天」面板的数据源：返回某个好友最近的聊天流水（时间正序）。
+
+    优先读微信本地库里的真实双向记录（对方和机器人说的话都能看到），
+    微信没连上时退回机器人自己的对话记忆（只有机器人记得的那部分）。
+    """
+    try:
+        user_id = (request.args.get("user_id") or "").strip()
+        wx = get_wx()
+        if not user_id:
+            return jsonify({"ok": True, "user_id": "", "source": "none",
+                            "wx_online": wx is not None, "messages": []})
+        try:
+            limit = max(6, min(80, int(request.args.get("limit") or 30)))
+        except (TypeError, ValueError):
+            limit = 30
+
+        messages = []
+        source = "none"
+        if wx is not None:
+            ctx = fetch_wechat_context(user_id, limit=limit)
+            for item in (ctx.get("messages") or []):
+                text = (item.get("text") or "").strip()
+                if not text:
+                    continue
+                messages.append({
+                    "role": "bot" if item.get("mine") else "friend",
+                    "text": text,
+                    "time": item.get("time") or "",
+                })
+            if messages:
+                source = "wechat"
+
+        if not messages:
+            for m in (chat_histories.get(user_id) or [])[-limit:]:
+                text = (m.get("content") or "").strip()
+                if not text:
+                    continue
+                messages.append({
+                    "role": "bot" if m.get("role") == "assistant" else "friend",
+                    "text": text,
+                    "time": "",
+                })
+            if messages:
+                source = "memory"
+
+        with persona_lock:
+            users_snapshot = dict(persona_data.get("users") or {})
+        u = users_snapshot.get(user_id) or {}
+        aff, stage_key, _force = peek_user_stage(user_id)
+        return jsonify({
+            "ok": True,
+            "user_id": user_id,
+            "source": source,
+            "wx_online": wx is not None,
+            "messages": messages,
+            "affection": aff,
+            "stage": stage_key,
+            "stage_name": STAGE_NAME_MAP.get(stage_key, "相识"),
+            "chat_count": u.get("chat_count", 0),
+        })
+    except Exception as e:
+        logger.error(f"读取聊天流水出错：{e}", exc_info=True)
+        return jsonify({"ok": False, "msg": str(e), "messages": []})
+
+
 @app.route('/api/send_message', methods=['POST'])
 def api_send_message():
     """向选中的好友发送手动输入的消息（后台线程发送，立即返回）。"""

@@ -227,13 +227,23 @@ step("secret._mask_provider_secrets 清空明文", lambda: (
 
 
 def _check_empty_key_keeps_old():
-    """空密钥保存必须保留原值；测完把 models_config.json 原样还原。"""
+    """空密钥保存必须保留原值；测完把 models_config.json 原样还原。
+
+    注意：全新仓库第一次跑自检时没有 models_config.json，也就没有「原值」。
+    所以先自己写入一个测试密钥，再验证「空值保存不会把它冲掉」。
+    """
     path = _cm.MODELS_CONFIG_FILE
     backup = None
     if os.path.exists(path):
         with open(path, "rb") as f:
             backup = f.read()
     try:
+        _cm.config_manager.save_provider(
+            "default_cloud",
+            {"name": "云端大模型 (默认)", "provider_type": "openai",
+             "base_url": "https://api.deepseek.com/v1", "model": "deepseek-chat",
+             "api_key": "sk-selftest-old-000", "temperature": 0.8, "max_tokens": 120},
+        )
         old = _cm.config_manager.save_provider(
             "default_cloud",
             {"name": "云端大模型 (默认)", "provider_type": "openai",
@@ -247,7 +257,12 @@ def _check_empty_key_keeps_old():
         if backup is not None:
             with open(path, "wb") as f:
                 f.write(backup)
-            _cm.config_manager.load()
+        else:
+            try:
+                os.remove(path)
+            except OSError:
+                pass
+        _cm.config_manager.load()
 
 
 step("secret.save 空密钥保留原值", _check_empty_key_keeps_old)
