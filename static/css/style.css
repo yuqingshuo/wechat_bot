@@ -84,7 +84,7 @@ body{
 /* ---------------- 三大面板 ---------------- */
 .deck{
   display:grid;
-  grid-template-columns:minmax(0,1fr) minmax(0,1.55fr) minmax(0,1fr);
+  grid-template-columns:minmax(0,1fr);
   gap:16px;
   align-items:stretch;
   margin-bottom:16px;
@@ -130,6 +130,15 @@ body{
 .panel-more:hover{border-color:var(--brand);color:var(--brand-dark);background:var(--brand-soft)}
 
 .panel-body{padding:0 18px 18px;display:flex;flex-direction:column;flex:1;min-height:0;min-width:0}
+
+/* 上下排列时，大脑面板内部用左右两栏，避免拉得太空 */
+.brain-body{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:14px 26px;align-items:start}
+.brain-main{min-width:0}
+.brain-side{min-width:0}
+.brain-side .brain-list-label{margin-top:0}
+.brain-side .brain-list{max-height:170px}
+.brain-body .brain-usage{grid-column:1 / -1}
+.brain-body .brain-foot{grid-column:1 / -1;margin-top:0;padding-top:0}
 
 /* ---------------- AI 大脑面板 ---------------- */
 .brain-now{
@@ -200,8 +209,12 @@ body{
 .chat-chip .cc-badge{font-size:10.5px;color:var(--muted);font-weight:700}
 
 .chat-stream{
-  flex:1;min-height:230px;max-height:320px;overflow-y:auto;min-width:0;
+  flex:1;min-height:260px;max-height:420px;overflow-y:auto;min-width:0;
   padding:4px 4px 8px 0;display:flex;flex-direction:column;gap:9px;
+}
+/* 全宽面板里让聊天区保持一个舒服的阅读宽度 */
+.chat-picker,.chat-stream,.chat-compose,.chat-foot,.chat-tools{
+  width:100%;max-width:900px;margin-left:auto;margin-right:auto;
 }
 .chat-empty{
   margin:auto;text-align:center;color:var(--muted);padding:20px 10px;
@@ -282,6 +295,18 @@ body.chat-locked::before{
   content:"";position:fixed;inset:0;z-index:190;
   background:rgba(15,23,42,.42);backdrop-filter:blur(3px);
 }
+
+/* 上下排列时，人设面板内部用左右两栏 */
+.persona-body{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:14px 26px;align-items:start}
+.persona-main{min-width:0}
+.persona-side{min-width:0}
+.persona-side .persona-list-label{margin-top:0}
+.persona-body .persona-chips{
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+  max-height:none;overflow:visible;
+}
+.persona-body .persona-stage{margin-top:14px}
+.persona-body .persona-note{margin-top:14px;padding-top:0}
 
 /* ---------------- 人设面板 ---------------- */
 .persona-now{display:flex;gap:13px;align-items:center;margin-top:2px}

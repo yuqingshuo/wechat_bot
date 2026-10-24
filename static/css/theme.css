@@ -143,9 +143,8 @@ html[data-theme="dark"] .back-top{background:#1c2331;color:#7fe3ae}
 
 /* ---------------- 响应式 ---------------- */
 @media(max-width:1080px){
-  .deck{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
-  .panel-chat{grid-column:1 / -1;order:-1}
-  .panel-chat .chat-stream{max-height:300px}
+  .brain-body,.persona-body{grid-template-columns:minmax(0,1fr)}
+  .brain-body .brain-usage,.brain-body .brain-foot{grid-column:auto}
 }
 @media(max-width:900px){
   .run-hero{grid-template-columns:minmax(0,1fr);gap:18px;padding:20px}
@@ -157,7 +156,9 @@ html[data-theme="dark"] .back-top{background:#1c2331;color:#7fe3ae}
   .topbar-inner{padding:10px 12px;flex-wrap:wrap}
   .topbar-right{margin-left:0;width:100%;justify-content:flex-start;flex-wrap:wrap}
   .deck{grid-template-columns:minmax(0,1fr);gap:12px}
-  .panel-chat{order:-1}
+  .brain-body,.persona-body{grid-template-columns:minmax(0,1fr)}
+  .brain-body .brain-usage,.brain-body .brain-foot{grid-column:auto}
+  .persona-body .persona-chips{grid-template-columns:minmax(0,1fr)}
   .grid-2{grid-template-columns:1fr}
   .section-body{padding:0 14px 16px;padding-top:14px}
   .section > summary{padding:13px 14px;font-size:14px}

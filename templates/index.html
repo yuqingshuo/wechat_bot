@@ -55,20 +55,24 @@
         </div>
         <button class="panel-more" onclick="openDrawer('brain')">详细设置</button>
       </header>
-      <div class="panel-body">
-        <div class="brain-now">
-          <div class="brain-label">当前在用</div>
-          <div class="brain-name" id="brainName">读取中…</div>
-          <div class="brain-model" id="brainModel">—</div>
+      <div class="panel-body brain-body">
+        <div class="brain-main">
+          <div class="brain-now">
+            <div class="brain-label">当前在用</div>
+            <div class="brain-name" id="brainName">读取中…</div>
+            <div class="brain-model" id="brainModel">—</div>
+          </div>
+          <div class="brain-meta">
+            <div class="meta-cell"><span>温度</span><b id="brainTemp">-</b></div>
+            <div class="meta-cell"><span>密钥</span><b id="brainKey">-</b></div>
+            <div class="meta-cell"><span>状态</span><b id="brainState">-</b></div>
+          </div>
         </div>
-        <div class="brain-meta">
-          <div class="meta-cell"><span>温度</span><b id="brainTemp">-</b></div>
-          <div class="meta-cell"><span>密钥</span><b id="brainKey">-</b></div>
-          <div class="meta-cell"><span>状态</span><b id="brainState">-</b></div>
-        </div>
-        <div class="brain-list-label">点一下切换大脑</div>
-        <div class="brain-list" id="brainQuickList">
-          <div class="empty-mini">正在读取模型列表…</div>
+        <div class="brain-side">
+          <div class="brain-list-label">点一下切换大脑</div>
+          <div class="brain-list" id="brainQuickList">
+            <div class="empty-mini">正在读取模型列表…</div>
+          </div>
         </div>
         <div class="brain-usage" id="brainUsage">用量统计读取中…</div>
         <div class="brain-foot" id="brainFoot">换完立刻生效，不用重启 · 密钥不会显示在页面上</div>
@@ -138,23 +142,27 @@
         </div>
         <button class="panel-more" onclick="openDrawer('persona')">自己改</button>
       </header>
-      <div class="panel-body">
-        <div class="persona-now">
-          <div class="persona-avatar" id="personaEmoji">🎭</div>
-          <div class="persona-info">
-            <div class="persona-name" id="personaName">读取中…</div>
-            <div class="persona-identity" id="personaIdentity">—</div>
-            <div class="persona-tag" id="personaTag">—</div>
+      <div class="panel-body persona-body">
+        <div class="persona-main">
+          <div class="persona-now">
+            <div class="persona-avatar" id="personaEmoji">🎭</div>
+            <div class="persona-info">
+              <div class="persona-name" id="personaName">读取中…</div>
+              <div class="persona-identity" id="personaIdentity">—</div>
+              <div class="persona-tag" id="personaTag">—</div>
+            </div>
+          </div>
+          <div class="persona-stage" id="personaStage">
+            <div class="empty-mini">正在读取三阶段提示词…</div>
+          </div>
+          <div class="persona-note">人设均为虚构创作，不对应任何真实个人。</div>
+        </div>
+        <div class="persona-side">
+          <div class="persona-list-label">点一下换人设</div>
+          <div class="persona-chips" id="personaChips">
+            <div class="empty-mini">正在读取人设…</div>
           </div>
         </div>
-        <div class="persona-list-label">点一下换人设</div>
-        <div class="persona-chips" id="personaChips">
-          <div class="empty-mini">正在读取人设…</div>
-        </div>
-        <div class="persona-stage" id="personaStage">
-          <div class="empty-mini">正在读取三阶段提示词…</div>
-        </div>
-        <div class="persona-note">人设均为虚构创作，不对应任何真实个人。</div>
       </div>
     </article>
   </section>
