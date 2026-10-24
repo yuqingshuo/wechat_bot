@@ -3188,6 +3188,14 @@ py_logging.getLogger('werkzeug').setLevel(py_logging.WARNING)
 def web_index():
     return render_template('index.html')
 
+
+@app.route('/run')
+@app.route('/run/')
+def web_run():
+    """独立的「启动 / 停止」控制台，不和配置页面混在一起。"""
+    return render_template('run.html')
+
+
 @app.route('/api/get_persona', methods=['GET'])
 def api_get_persona():
     with persona_lock:
@@ -4055,7 +4063,7 @@ def main():
             logger.info("检测到已开启开机自动启动：立即自动连接微信并进入全自动运行模式...")
         start_bot(background=True)
     else:
-        logger.info("未开启开机自动启动：请打开网页控制台，点击「启动机器人」后才开始工作。")
+        logger.info("未开启开机自动启动：请打开「启动控制台」(/run)，点击「启动机器人」后才开始工作。")
 
     logger.info("程序已就绪并持续运行中（自动监听 + 自动回复）；按 Ctrl+C 可安全退出。")
     try:

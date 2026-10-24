@@ -127,11 +127,6 @@ async function loadBotStatus() {
     if (d.last_message_at && d.last_message_from) bits.push('最近一句来自 ' + d.last_message_from);
     setText('runSub', bits.join(' ｜ '));
 
-    setText('stMsg', d.messages_received || 0);
-    setText('stReply', d.replies_sent || 0);
-    setText('stMem', d.memory_rounds || 0);
-    setText('stQueue', d.queue_pending || 0);
-
     // 「AI 大脑」底部的用量信息，让这块面板不只是一张空的切换列表
     var usage = (d.token_stats && d.token_stats.text) || '';
     if (d.last_error) usage += (usage ? ' · ' : '') + '⚠ ' + d.last_error;
@@ -141,127 +136,19 @@ async function loadBotStatus() {
       usageEl.classList.toggle('warn', !!d.last_error);
     }
 
-    var busy = (d.state === 'connecting' || d.state === 'stopping');
-    var bStart = $('btnBotStart'), bStop = $('btnBotStop'), bEasy = $('btnEasyMode');
-    if (bStart) bStart.disabled = !!d.running || busy;
-    if (bStop) bStop.disabled = !d.running && !busy;
-    if (bEasy) bEasy.disabled = !!d.running || busy;
-
     var pv = d.active_provider || {};
     var bs = $('brainState');
     if (bs) bs.innerText = d.running ? '在岗' : ((pv.id || pv.name) ? '待命' : '未配置');
-
-    if (!S.runtimeSaving) {
-      var rt = d.runtime || {};
-      if ($('rtAutoStart')) $('rtAutoStart').checked = rt.auto_start === true;
-      if ($('rtAutoReply')) $('rtAutoReply').checked = rt.auto_reply !== false;
-      if ($('rtAutoMemory')) $('rtAutoMemory').checked = rt.auto_save_memory !== false;
-      if ($('rtAutoReconnect')) $('rtAutoReconnect').checked = rt.auto_reconnect !== false;
-      if ($('rtRetry')) $('rtRetry').value = rt.connect_retry || 3;
-      paintSwitches();
-    }
   } catch (e) {
     console.error('读取运行状态失败', e);
   }
 }
 
 function paintSwitches() {
-  [['rtAutoStart', 'swAutoStart'], ['rtAutoReply', 'swAutoReply'],
-   ['rtAutoMemory', 'swAutoMemory'], ['rtAutoReconnect', 'swAutoReconnect'],
-   ['autoEnabled', 'swAutoChat']].forEach(function (p) {
+  [['autoEnabled', 'swAutoChat']].forEach(function (p) {
     var box = $(p[0]), card = $(p[1]);
     if (box && card) card.classList.toggle('on', !!box.checked);
   });
-}
-
-async function startBot() {
-  var btn = $('btnBotStart');
-  if (btn) { btn.disabled = true; btn.innerText = '正在连接…'; }
-  var pill = $('botStatePill');
-  if (pill) { pill.className = 'bot-pill connecting'; pill.innerText = '🟡 正在连接…'; }
-  try {
-    var d = await postJSON('/api/bot/start');
-    toast(d.msg || '收到，正在自动连微信，稍等十几秒…');
-  } catch (e) {
-    alert('启动失败：' + e);
-  }
-  if (btn) btn.innerText = '🚀 启动';
-  loadBotStatus();
-}
-
-async function stopBot() {
-  var btn = $('btnBotStop');
-  if (btn) btn.disabled = true;
-  try {
-    var d = await postJSON('/api/bot/stop');
-    toast(d.msg || '已停下，不会自动回复了');
-  } catch (e) {
-    alert('停止失败：' + e);
-  }
-  loadBotStatus();
-  loadAutoChat();
-}
-
-async function saveRuntime(showTip) {
-  S.runtimeSaving = true;
-  paintSwitches();
-  var payload = {
-    auto_start: !!($('rtAutoStart') && $('rtAutoStart').checked),
-    auto_reply: !!($('rtAutoReply') && $('rtAutoReply').checked),
-    auto_save_memory: !!($('rtAutoMemory') && $('rtAutoMemory').checked),
-    auto_reconnect: !!($('rtAutoReconnect') && $('rtAutoReconnect').checked),
-    connect_retry: parseInt(($('rtRetry') || {}).value, 10) || 3
-  };
-  try {
-    var d = await postJSON('/api/bot/save_runtime', payload);
-    if (d.ok) { if (showTip !== false) toast('✅ 运行设置已保存'); }
-    else alert('保存失败：' + (d.msg || '未知错误'));
-  } catch (e) {
-    alert('保存失败：' + e);
-  }
-  S.runtimeSaving = false;
-  loadBotStatus();
-}
-
-async function easyMode() {
-  var btn = $('btnEasyMode');
-  var old = btn ? btn.innerText : '🤖 傻瓜模式';
-  if (btn) { btn.disabled = true; btn.innerText = '检查中…'; }
-  function reset() { if (btn) { btn.disabled = false; btn.innerText = old; } }
-
-  try {
-    var st = null;
-    try { st = await getJSON('/api/bot/status'); } catch (e) {}
-    if (st && st.running) { toast('✅ 已经在自动工作中了，不用重复启动'); loadBotStatus(); reset(); return; }
-
-    var persona = null;
-    try { persona = await getJSON('/api/persona_presets'); } catch (e) {}
-    var prov = null;
-    try { prov = await getJSON('/api/llm/providers'); } catch (e) {}
-
-    var missing = [];
-    if (!(persona && persona.current_name)) missing.push('人设（在「挑一个人设」里套用一个，或自己填好保存）');
-    if (!(prov && prov.active_provider)) missing.push('AI 大脑（在「AI 大脑」里配置并激活一个模型）');
-    if (missing.length) {
-      reset();
-      alert('还差一点，先完成这些：\n• ' + missing.join('\n• ') + '\n\n弄好后再点「傻瓜模式」，它会全自动启动。');
-      return;
-    }
-
-    var r1 = await postJSON('/api/bot/save_runtime', {
-      auto_reply: true, auto_save_memory: true, auto_reconnect: true, connect_retry: 3
-    });
-    if (!r1.ok) throw new Error(r1.msg || '保存运行配置失败');
-
-    var r2 = await postJSON('/api/bot/start');
-    if (!r2.ok) throw new Error(r2.msg || '启动失败');
-    toast('🚀 傻瓜模式已启动：自动连微信、自动回消息、自动存档');
-    reset();
-    loadBotStatus();
-  } catch (e) {
-    reset();
-    alert('傻瓜模式出错：' + e);
-  }
 }
 
 /* =============================================================================

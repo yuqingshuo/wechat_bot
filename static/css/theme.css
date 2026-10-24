@@ -107,6 +107,16 @@ html[data-theme="dark"] .firstrun{
 }
 html[data-theme="dark"] .brain-usage{background:var(--soft);border-color:var(--line);color:var(--muted)}
 html[data-theme="dark"] .brain-usage.warn{background:#2a2016;border-color:#7c4a12;color:#f5c98a}
+html[data-theme="dark"] .run-banner{background:var(--card);border-color:var(--line)}
+html[data-theme="dark"] .run-banner .rb-cta{background:#0f2f22;border-color:#1d5a3d;color:#7fe3ae}
+html[data-theme="dark"] .run-hero{
+  background:linear-gradient(135deg,#0f2a1e 0%,#151d33 100%);
+  border-color:#2a3550;
+}
+html[data-theme="dark"] .run-hero-label{color:#7fe3ae}
+html[data-theme="dark"] .run-fact{background:rgba(23,29,41,.72);border-color:#28313f}
+html[data-theme="dark"] .rc-item{background:var(--soft);border-color:var(--line)}
+html[data-theme="dark"] .rc-item:hover{background:#12241c;border-color:#1d5a3d}
 
 /* ---------------- 顶栏小按钮 ---------------- */
 .theme-btn{
@@ -137,6 +147,11 @@ html[data-theme="dark"] .back-top{background:#1c2331;color:#7fe3ae}
   .panel-chat{grid-column:1 / -1;order:-1}
   .panel-chat .chat-stream{max-height:300px}
 }
+@media(max-width:900px){
+  .run-hero{grid-template-columns:minmax(0,1fr);gap:18px;padding:20px}
+  .run-grid{grid-template-columns:minmax(0,1fr)}
+  .run-facts{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
 @media(max-width:760px){
   .container{padding:14px 12px 0}
   .topbar-inner{padding:10px 12px;flex-wrap:wrap}
@@ -159,4 +174,11 @@ html[data-theme="dark"] .back-top{background:#1c2331;color:#7fe3ae}
   .msg{max-width:92%}
   .chat-target b{max-width:46vw}
   .chat-foot-actions{flex-wrap:wrap}
+  .run-hero-status b{font-size:23px}
+  .run-facts{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .run-banner{padding:12px 14px;flex-wrap:wrap}
+  .run-banner .rb-text{flex-basis:calc(100% - 30px)}
+  .run-banner .rb-text span{white-space:normal}
+  .run-banner .rb-cta{width:100%;text-align:center}
+  .run-card{padding:15px 14px}
 }

@@ -20,7 +20,7 @@
     </div>
     <div class="topbar-right">
       <span class="bot-pill off" id="botStatePill">⚪ 未启动</span>
-      <button class="btn-easy" id="btnEasyMode" onclick="easyMode()" title="人设和大脑弄好后，点一下全自动启动">🤖 傻瓜模式</button>
+      <a class="theme-btn nav-btn" href="/run" title="启动 / 停止机器人">🚀 启动控制台</a>
       <button class="theme-btn" id="themeToggle" title="切换浅色 / 深色">🌙 深色</button>
     </div>
   </div>
@@ -38,7 +38,7 @@
     <div class="fr-actions">
       <button class="btn-mini" onclick="openDrawer('persona')">① 挑人设</button>
       <button class="btn-mini" onclick="openDrawer('brain')">② 配大脑</button>
-      <button class="btn-mini primary" onclick="startBot()">③ 启动</button>
+      <a class="btn-mini primary" href="/run">③ 去启动</a>
     </div>
   </div>
 
@@ -159,43 +159,15 @@
     </article>
   </section>
 
-  <!-- ================= 运行状态 ================= -->
-  <section class="runner">
-    <div class="runner-main">
-      <div class="runner-state">
-        <div class="runner-title">
-          <span class="dot" id="runDot"></span>
-          <b id="runStatus">正在读取运行状态…</b>
-        </div>
-        <div class="runner-sub" id="runSub">微信连接状态会显示在这里</div>
-      </div>
-      <div class="runner-actions">
-        <button class="btn-primary" id="btnBotStart" onclick="startBot()">🚀 启动</button>
-        <button class="btn-ghost" id="btnBotStop" onclick="stopBot()">⏹ 停止</button>
-      </div>
-    </div>
-    <div class="stat-grid">
-      <div class="stat"><b id="stMsg">-</b><span>收到消息</span></div>
-      <div class="stat"><b id="stReply">-</b><span>自动回复</span></div>
-      <div class="stat"><b id="stMem">-</b><span>存档轮数</span></div>
-      <div class="stat"><b id="stQueue">-</b><span>排队中</span></div>
-    </div>
-    <details class="inner">
-      <summary>运行开关（保持默认即可）</summary>
-      <div class="switch-list">
-        <label class="switch-card" id="swAutoStart"><input type="checkbox" id="rtAutoStart" onchange="saveRuntime()"><span class="sw-txt"><b>开机自动启动</b><small>程序一运行就自己连微信开始工作</small></span></label>
-        <label class="switch-card" id="swAutoReply"><input type="checkbox" id="rtAutoReply" onchange="saveRuntime()"><span class="sw-txt"><b>收到消息自动回复</b><small>有人发微信来，它自己想回复并发送</small></span></label>
-        <label class="switch-card" id="swAutoMemory"><input type="checkbox" id="rtAutoMemory" onchange="saveRuntime()"><span class="sw-txt"><b>聊天记录自动存档</b><small>每句话都记下来，越聊越懂对方</small></span></label>
-        <label class="switch-card" id="swAutoReconnect"><input type="checkbox" id="rtAutoReconnect" onchange="saveRuntime()"><span class="sw-txt"><b>微信掉线自动重连</b><small>网络闪断自己恢复，不用人守着</small></span></label>
-      </div>
-      <div class="action-row">
-        <span class="muted-sm">连不上微信时，最多重试</span>
-        <input type="number" id="rtRetry" min="1" max="20" value="3" class="num-input" onchange="saveRuntime()">
-        <span class="muted-sm">次</span>
-        <button class="btn-ghost" onclick="saveRuntime(true)">💾 保存运行设置</button>
-      </div>
-    </details>
-  </section>
+  <!-- ================= 启动 / 停止入口（启动控制在单独页面） ================= -->
+  <a class="run-banner" id="runBanner" href="/run">
+    <span class="dot" id="runDot"></span>
+    <span class="rb-text">
+      <b id="runStatus">正在读取运行状态…</b>
+      <span id="runSub">机器人的启动、停止和运行统计都在单独的「启动控制台」里</span>
+    </span>
+    <span class="rb-cta">🚀 打开启动控制台 →</span>
+  </a>
 
   <!-- ================= 监听好友 ================= -->
   <details class="section">
