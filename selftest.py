@@ -12,6 +12,18 @@ os.environ["PYTHONUTF8"] = "1"
 results = []
 
 
+def must(cond, msg):
+    """断言必须成立，否则抛出 AssertionError。
+
+    旧写法 `cond or "错误信息"` 在条件不成立时返回的是真值字符串，而 step()
+    只把「抛异常」当成失败，结果这些用例永远显示 PASS，形同虚设。
+    统一改成 must()，让失败真的能冒出来。
+    """
+    if not cond:
+        raise AssertionError(msg)
+    return True
+
+
 def step(name, fn):
     try:
         r = fn()
@@ -181,66 +193,71 @@ def _overlay(pid, data, env=None, local=None):
         return _cm.apply_env_local_overlay(pid, data)
 
 
-step("config_priority.环境变量盖过存档值", lambda: (
+step("config_priority.环境变量盖过存档值", lambda: must(
     _overlay("default_cloud", {"api_key": "sk-old", "model": "old-model"},
              env={"WECHATBOT_API_KEY": "sk-env-test-000",
                   "WECHATBOT_MODEL": "env-model-x"},
              local={"API_KEY": "sk-local-test-000", "MODEL": "local-model"})
-    == {"api_key": "sk-env-test-000", "model": "env-model-x"}
-    or "环境变量未生效!"))
+    == {"api_key": "sk-env-test-000", "model": "env-model-x"}, "环境变量未生效!"))
 
-step("config_priority.config_local 盖过存档值", lambda: (
+step("config_priority.config_local 盖过存档值", lambda: must(
     _overlay("default_cloud", {"api_key": "sk-old", "model": "old-model"},
              env={}, local={"API_KEY": "sk-local-test-000", "MODEL": "local-model"})
-    == {"api_key": "sk-local-test-000", "model": "local-model"}
-    or "config_local 未生效!"))
+    == {"api_key": "sk-local-test-000", "model": "local-model"}, "config_local 未生效!"))
 
-step("config_priority.都没配时用存档值", lambda: (
+step("config_priority.都没配时用存档值", lambda: must(
     _overlay("default_cloud", {"api_key": "sk-saved", "model": "saved-model"},
              env={}, local={})
-    == {"api_key": "sk-saved", "model": "saved-model"}
-    or "存档值被覆盖了!"))
+    == {"api_key": "sk-saved", "model": "saved-model"}, "存档值被覆盖了!"))
 
-step("config_priority.自定义Provider不吃环境变量", lambda: (
+step("config_priority.自定义Provider不吃环境变量", lambda: must(
     _overlay("my_own", {"api_key": "sk-saved", "model": "m"},
              env={"WECHATBOT_API_KEY": "sk-env-test-000"}, local={})
-    == {"api_key": "sk-saved", "model": "m"}
-    or "自定义 Provider 被环境变量污染了!"))
+    == {"api_key": "sk-saved", "model": "m"}, "自定义 Provider 被环境变量污染了!"))
 
-step("config_priority.api_key_source 识别", lambda: (
+step("config_priority.api_key_source 识别", lambda: must(
     _cm.api_key_source("my_own", "sk-saved") == "saved"
     and _cm.api_key_source("my_own", "") == "none"
-    or "source 判定错误!"))
+    , "source 判定错误!"))
 
 # ---- 密钥绝不外泄 ----
-step("secret.list_all_providers 不含密钥明文", lambda: (
+step("secret.list_all_providers 不含密钥明文", lambda: must(
     all(not p.get("api_key") for p in main.llm.list_all_providers())
-    or "仍有明文!"))
+    , "仍有明文!"))
 
-step("secret.返回体带 has_api_key 标记", lambda: (
+step("secret.返回体带 has_api_key 标记", lambda: must(
     all("has_api_key" in p for p in main.llm.list_all_providers())
-    or "缺 has_api_key"))
+    , "缺 has_api_key"))
 
-step("secret._mask_provider_secrets 清空明文", lambda: (
+step("secret._mask_provider_secrets 清空明文", lambda: must(
     main._mask_provider_secrets({"api_key": "sk-leak-test", "name": "x"})["api_key"] == ""
-    or "掩码失败!"))
+    , "掩码失败!"))
 
 
 def _check_empty_key_keeps_old():
-    """空密钥保存必须保留原值；测完把 models_config.json 原样还原。"""
+    """空密钥保存必须保留原值；测完把 models_config.json 原样还原。
+
+    先写入一个已知密钥，再用空密钥保存，验证「留空 = 沿用原来的」成立。
+    不能直接拿 default_cloud 当前存档的密钥来测：密钥已全面外置，存档里的
+    api_key 本来就是空字符串，直接测会误报。
+    """
     path = _cm.MODELS_CONFIG_FILE
     backup = None
     if os.path.exists(path):
         with open(path, "rb") as f:
             backup = f.read()
     try:
+        seed = {"name": "云端大模型", "provider_type": "openai",
+                "base_url": "https://api.deepseek.com/v1", "model": "deepseek-chat",
+                "api_key": "sk-seed-test-000", "temperature": 0.8, "max_tokens": 120}
+        _cm.config_manager.save_provider("default_cloud", seed)
         old = _cm.config_manager.save_provider(
             "default_cloud",
             {"name": "云端大模型", "provider_type": "openai",
              "base_url": "https://api.deepseek.com/v1", "model": "deepseek-chat",
              "api_key": "", "temperature": 0.8, "max_tokens": 120},
         ).api_key
-        if old == "":
+        if old != "sk-seed-test-000":
             raise AssertionError("空密钥把原值冲掉了!")
         return "原值已保留"
     finally:
@@ -248,6 +265,8 @@ def _check_empty_key_keeps_old():
             with open(path, "wb") as f:
                 f.write(backup)
             _cm.config_manager.load()
+        elif os.path.exists(path):
+            os.remove(path)
 
 
 step("secret.save 空密钥保留原值", _check_empty_key_keeps_old)
