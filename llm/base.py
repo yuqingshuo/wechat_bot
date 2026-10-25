@@ -10,7 +10,7 @@ from typing import List, Dict, Any, Optional, Iterator
 @dataclass
 class LLMConfig:
     id: str                                  # Provider 唯一标识，例如 "default_cloud", "local_ollama"
-    name: str                                # 友好显示名称，例如 "云端大模型 (默认)"
+    name: str                                # 友好显示名称，例如 "云端大模型"
     provider_type: str                       # 类型："openai" | "ollama" | "llamacpp"
     base_url: str                            # API 根路径
     api_key: str = ""                        # 密钥（本地模型可为空）

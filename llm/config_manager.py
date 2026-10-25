@@ -76,9 +76,10 @@ def apply_env_local_overlay(provider_id: str, p_data: Dict[str, Any]) -> Dict[st
 
 
 def get_default_models_config() -> Dict[str, Any]:
+    # 注意：default_cloud 的 base_url / model 故意留空，不再从旧配置播种
+    # （以前会把 agnes-3.0-flash 之类的旧值预填进网页「AI 大脑」表单，
+    #  现在表单是干净的，用户自己填新的；温度/长度保留调好的默认值）。
     legacy_api_key = getattr(legacy_config, "API_KEY", "")
-    legacy_base_url = getattr(legacy_config, "BASE_URL", "https://api.deepseek.com/v1")
-    legacy_model = getattr(legacy_config, "MODEL", "deepseek-chat")
     legacy_temp = float(getattr(legacy_config, "TEMPERATURE", 0.8))
     legacy_max_tokens = int(getattr(legacy_config, "MAX_TOKENS", 120))
 
@@ -89,9 +90,9 @@ def get_default_models_config() -> Dict[str, Any]:
                 "id": "default_cloud",
                 "name": "云端大模型",
                 "provider_type": "openai",
-                "base_url": legacy_base_url,
+                "base_url": "",
                 "api_key": legacy_api_key,
-                "model": legacy_model,
+                "model": "",
                 "temperature": legacy_temp,
                 "max_tokens": legacy_max_tokens,
                 "timeout": 45.0,
@@ -100,12 +101,25 @@ def get_default_models_config() -> Dict[str, Any]:
             },
             "local_ollama": {
                 "id": "local_ollama",
-                "name": "本地大模型",
+                "name": "本地模型",
                 "provider_type": "ollama",
                 "base_url": "http://127.0.0.1:11434",
                 "api_key": "",
                 "model": "qwen2.5:7b",
                 "temperature": 0.8,
+                "max_tokens": 120,
+                "timeout": 60.0,
+                "max_retries": 1,
+                "extra": {}
+            },
+            "local_llamacpp": {
+                "id": "local_llamacpp",
+                "name": "本地模型",
+                "provider_type": "llamacpp",
+                "base_url": "http://127.0.0.1:8080/v1",
+                "api_key": "",
+                "model": "default",
+                "temperature": 0.7,
                 "max_tokens": 120,
                 "timeout": 60.0,
                 "max_retries": 1,

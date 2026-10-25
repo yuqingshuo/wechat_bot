@@ -13,9 +13,6 @@
   function initTheme() {
     var saved = null;
     try { saved = localStorage.getItem(KEY); } catch (e) {}
-    // 支持 ?theme=dark / ?theme=light 直接指定（方便分享深色链接、截图）
-    var q = (location.search.match(/[?&]theme=(dark|light)\b/) || [])[1];
-    if (q) saved = q;
     if (!saved && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
       saved = 'dark';
     }

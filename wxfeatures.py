@@ -61,11 +61,11 @@ class DedupeGuard(object):
             self._purge(ts)
             if key in self._seen:
                 return True
-            self._seen[key] = ts
+            self._seen[key] = (ts, who or "")
             return False
 
     def _purge(self, now):
-        expired = [k for k, v in self._seen.items() if now - v > self.ttl]
+        expired = [k for k, v in self._seen.items() if now - v[0] > self.ttl]
         for k in expired:
             self._seen.pop(k, None)
 
@@ -74,7 +74,7 @@ class DedupeGuard(object):
             if who is None:
                 self._seen.clear()
             else:
-                self._seen = {}
+                self._seen = {k: v for k, v in self._seen.items() if v[1] != who}
 
     def size(self):
         with self._lock:

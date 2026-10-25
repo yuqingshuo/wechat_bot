@@ -11,347 +11,249 @@
 <body>
 
 <!-- ================= 顶栏 ================= -->
-<div class="topbar">
-  <div class="topbar-inner">
-    <div class="logo">💬</div>
-    <div class="brand">
-      <h1>微信聊天小助手</h1>
-      <p>AI 陪聊控制台</p>
-    </div>
-    <div class="topbar-right">
-      <span class="bot-pill off" id="botStatePill">⚪ 未启动</span>
-      <a class="theme-btn nav-btn" href="/run" title="启动 / 停止机器人">🚀 启动控制台</a>
-      <button class="theme-btn" id="themeToggle" title="切换浅色 / 深色">🌙 深色</button>
-    </div>
+<div class="topbar"><div class="topbar-inner">
+  <div class="logo">💬</div>
+  <div><h1>微信聊天小助手</h1><p>AI 陪聊控制台 · 小白也能用</p></div>
+  <div class="topbar-right">
+    <span class="bot-pill off" id="botStatePill">⚪ 未启动</span>
+    <button class="btn-easy" id="btnEasyMode" onclick="easyMode()" title="傻瓜模式：人设和 API 弄好后，点一下全自动启动，其他什么都不用管">🤖 傻瓜模式</button>
+    <button class="theme-btn" id="themeToggle" title="切换浅色/深色">🌙 深色</button>
   </div>
-</div>
+</div></div>
 
 <div class="container">
 
-  <!-- ================= 第一次使用引导（配好人设和大脑后自动消失） ================= -->
-  <div class="firstrun" id="firstRun" hidden>
-    <span class="fr-ico">👋</span>
-    <div class="fr-text">
-      <b>第一次用？三步就能跑起来</b>
-      <span id="firstRunMsg">先挑一个人设，再配好 AI 大脑，最后点启动</span>
+  <!-- ================= 引导条（压缩成一条） ================= -->
+  <div class="hero compact">
+    <div class="hero-text">
+      <h2>👋 第一次用？先做 2 件事</h2>
+      <p>① 先在下面配好 AI 大脑和一个人设　② 再点绿色「🚀 启动」按钮。<b>不点「启动」它就不会连微信、也不会回任何人。</b></p>
     </div>
-    <div class="fr-actions">
-      <button class="btn-mini" onclick="openDrawer('persona')">① 挑人设</button>
-      <button class="btn-mini" onclick="openDrawer('brain')">② 配大脑</button>
-      <a class="btn-mini primary" href="/run">③ 去启动</a>
+    <div class="hero-actions">
+      <button class="btn-white" id="btnBotStart" onclick="startBot()">🚀 启动</button>
+      <button class="btn-ghost" id="btnBotStop" onclick="stopBot()" style="background:rgba(255,255,255,.15);color:#fff;border-color:#fff">⏹ 停止</button>
     </div>
+    <div class="hero-steps"><span id="heroState">正在看状态…</span></div>
   </div>
 
-  <!-- ================= 三大核心面板 ================= -->
-  <section class="deck">
+  <!-- ================= 三大核心：最显眼的位置 ================= -->
+  <div id="coreCards">
 
     <!-- ① AI 大脑 -->
-    <article class="panel panel-brain">
-      <header class="panel-head">
-        <span class="panel-icon">🧠</span>
-        <div class="panel-title">
-          <h2>AI 大脑</h2>
-          <p>决定它有多聪明</p>
-        </div>
-        <button class="panel-more" onclick="openDrawer('brain')">详细设置</button>
-      </header>
-      <div class="panel-body brain-body">
-        <div class="brain-main">
-          <div class="brain-now">
-            <div class="brain-label">当前在用</div>
-            <div class="brain-name" id="brainName">读取中…</div>
-            <div class="brain-model" id="brainModel">—</div>
-          </div>
-          <div class="brain-meta">
-            <div class="meta-cell"><span>温度</span><b id="brainTemp">-</b></div>
-            <div class="meta-cell"><span>密钥</span><b id="brainKey">-</b></div>
-            <div class="meta-cell"><span>状态</span><b id="brainState">-</b></div>
-          </div>
-        </div>
-        <div class="brain-side">
-          <div class="brain-list-label">点一下切换大脑</div>
-          <div class="brain-list" id="brainQuickList">
-            <div class="empty-mini">正在读取模型列表…</div>
-          </div>
-        </div>
-        <div class="brain-usage" id="brainUsage">用量统计读取中…</div>
-        <div class="brain-foot" id="brainFoot">换完立刻生效，不用重启 · 密钥不会显示在页面上</div>
-      </div>
-    </article>
-
-    <!-- ② 跟随聊天 -->
-    <article class="panel panel-chat" id="panelChat">
-      <header class="panel-head">
-        <span class="panel-icon">💬</span>
-        <div class="panel-title">
-          <h2>跟随聊天</h2>
-          <p>看着它怎么聊，随时插一句</p>
-        </div>
-        <button class="panel-more" id="btnChatExpand" onclick="toggleChatExpand()">放大</button>
-      </header>
-      <div class="panel-body chat-body">
-        <div class="chat-picker" id="chatPicker">
-          <div class="empty-mini">正在读取好友…</div>
-        </div>
-        <div class="chat-stream" id="chatStream">
-          <div class="chat-empty">
-            <div class="chat-empty-icon">👀</div>
-            <div class="chat-empty-title">还没开始聊</div>
-            <div class="chat-empty-sub">启动机器人、连上微信后，点上面的好友就能实时看到它怎么聊</div>
-          </div>
-        </div>
-        <div class="chat-compose">
-          <input type="text" id="messageInput" placeholder="以它的身份说一句话，回车发送…" onkeydown="if(event.key==='Enter')sendSelectedMessage()">
-          <button class="btn-send" id="btnSend" onclick="sendSelectedMessage()" disabled>发送</button>
-        </div>
-        <div class="chat-foot">
-          <div class="chat-target">
-            <b id="chatTarget">还没选好友</b>
-            <span class="stage-pill pill-1" id="chatStage">—</span>
-            <span id="chatMeta" class="chat-meta"></span>
-          </div>
-          <div class="chat-foot-actions">
-            <span class="chat-source" id="chatSource"></span>
-            <button class="btn-mini" id="btnAutoChat" onclick="toggleAutoChatWith()" disabled>🤖 自动聊天</button>
-          </div>
-        </div>
-
-        <!-- 放大后才显示的工具区 -->
-        <div class="chat-tools">
-          <div class="chat-tools-row">
-            <input type="text" id="topicInput" placeholder="懒得自己想？写个话题，让 AI 帮你说一句（可留空）">
-            <button class="btn-mini" id="btnGen" onclick="aiOutreach(false)" disabled>✍️ 帮我写</button>
-            <button class="btn-mini primary" id="btnGenSend" onclick="aiOutreach(true)" disabled>💌 写完直接发</button>
-          </div>
-          <div class="chat-tools-row small">
-            <label class="chk"><input type="checkbox" id="humanlikeChk" checked> 像真人一样停顿一下再发</label>
-            <label class="chk"><input type="checkbox" id="affectionChk"> 这次聊完好感 +1</label>
-            <span class="chat-tip">提示：中间用 \ 分开，会像真人那样一条条发出去</span>
-          </div>
+    <div class="card prominent-card core-brain">
+      <div class="card-head">
+        <div class="step-num">①</div>
+        <div>
+          <div class="card-title">🧠 AI 大脑 <small style="font-weight:500;color:var(--muted)">· 决定它有多聪明</small></div>
+          <div class="card-sub">所有自动回复的话都由这里选中的 AI 模型来想；换模型 = 换一个更聪明 / 更便宜 / 本地运行的大脑。不懂就别动，默认已经配好。</div>
         </div>
       </div>
-    </article>
+      <div class="grid-3" style="margin-top:16px">
+        <div><label>正在使用的大脑 <small>· 点一下直接切</small></label><select id="llmSelect" onchange="switchLLM()"><option value="">正在读取…</option></select></div>
+        <div><label>大脑名字 <small>· 给自己看的备注</small></label><input type="text" id="llmName" placeholder="例如：云端大模型"></div>
+        <div><label>模型名称 Model <small>· 具体用哪个版本</small></label><input type="text" id="llmModel" placeholder="例如：deepseek-chat"></div>
+        <div><label>接口地址 Base URL <small>· 云端照抄，本地填 127.0.0.1 那串</small></label><input type="text" id="llmBaseUrl" placeholder="https://…/v1"></div>
+        <div><label>密钥 API Key <small>· 云端必填，本地一般留空</small></label><input type="text" id="llmApiKey" placeholder="sk-…"><small id="llmKeyHint" style="display:none;color:#f0a500;margin-top:4px"></small></div>
+        <div><label>说话风格 <small>· 数字越大越活泼（0.1 老实 ～ 1.5 放飞）</small></label><input type="text" id="llmTemp" placeholder="例如：1.0"></div>
+      </div>
+      <div class="action-row"><button class="btn-primary" onclick="saveLLM()">💾 保存大脑设置</button><button class="btn-ghost" onclick="loadLLM()">↻ 重新读取</button><span id="llmStatus" style="font-size:13px;color:var(--muted)"></span></div>
+    </div>
 
-    <!-- ③ 挑一个人设 -->
-    <article class="panel panel-persona">
-      <header class="panel-head">
-        <span class="panel-icon">🎭</span>
-        <div class="panel-title">
-          <h2>挑一个人设</h2>
-          <p>决定它是谁、怎么说话</p>
-        </div>
-        <button class="panel-more" onclick="openDrawer('persona')">自己改</button>
-      </header>
-      <div class="panel-body persona-body">
-        <div class="persona-main">
-          <div class="persona-now">
-            <div class="persona-avatar" id="personaEmoji">🎭</div>
-            <div class="persona-info">
-              <div class="persona-name" id="personaName">读取中…</div>
-              <div class="persona-identity" id="personaIdentity">—</div>
-              <div class="persona-tag" id="personaTag">—</div>
-            </div>
-          </div>
-          <div class="persona-stage" id="personaStage">
-            <div class="empty-mini">正在读取三阶段提示词…</div>
-          </div>
-          <div class="persona-note">人设均为虚构创作，不对应任何真实个人。</div>
-        </div>
-        <div class="persona-side">
-          <div class="persona-list-label">点一下换人设</div>
-          <div class="persona-chips" id="personaChips">
-            <div class="empty-mini">正在读取人设…</div>
-          </div>
+    <!-- ② 和谁聊天 -->
+    <div class="card prominent-card core-chat">
+      <div class="card-head">
+        <div class="step-num">②</div>
+        <div>
+          <div class="card-title">💬 和谁聊天 <small style="font-weight:500;color:var(--muted)">· 点一个人，就能打字发消息</small></div>
+          <div class="card-sub">微信连上以后这里会出现好友卡片；点一张就是选中这个人，下面的输入框就是发给 TA 的</div>
         </div>
       </div>
-    </article>
-  </section>
-
-  <!-- ================= 启动 / 停止入口（启动控制在单独页面） ================= -->
-  <a class="run-banner" id="runBanner" href="/run">
-    <span class="dot" id="runDot"></span>
-    <span class="rb-text">
-      <b id="runStatus">正在读取运行状态…</b>
-      <span id="runSub">机器人的启动、停止和运行统计都在单独的「启动控制台」里</span>
-    </span>
-    <span class="rb-cta">🚀 打开启动控制台 →</span>
-  </a>
-
-  <!-- ================= 监听好友 ================= -->
-  <details class="section">
-    <summary><span class="sec-icon">👥</span> 监听好友 <small>· 只管「跟谁聊」，性格由人设统一决定</small></summary>
-    <div class="section-body">
-      <div class="tip blue">💡 填微信通讯录里显示的<b>昵称或备注</b>（一个字都不能差），保存后自动生效，不用重启。</div>
-      <div class="action-row">
-        <label class="inline-label">监听方式</label>
-        <select id="listenMode" class="auto-width">
-          <option value="whitelist">只听名单里的人（推荐）</option>
-          <option value="all_private">所有私聊都回（陌生人也会回）</option>
-        </select>
+      <div class="wx-status offline" id="wxStatus">正在检测微信连接状态…</div>
+      <input type="text" class="search-box" id="contactSearch" placeholder="🔍 输入昵称关键字快速找人…" oninput="renderContacts(contactsData)">
+      <div class="contact-grid" id="contactGrid"></div>
+      <div class="target-panel">
+        <div class="target-head"><span>当前选中：<b id="targetName">还没选（点上面任意一张卡片）</b></span><span class="stage-pill pill-1" id="targetStage">—</span><span id="targetMeta" style="font-size:13px;color:var(--muted)"></span></div>
+        <div id="listenWarn" style="display:none"></div>
+        <label>想说的话 <small>· 中间用 \ 分开，就会像真人一样一条条发出去</small></label>
+        <textarea id="messageInput" placeholder="例如：今天过得怎么样呀&#10;晚上一起吃饭吗"></textarea>
+        <div class="action-row">
+          <button class="btn-primary" id="btnSend" onclick="sendSelectedMessage()" disabled>🚀 发送</button>
+          <button class="btn-easy" id="btnAutoChat" onclick="toggleAutoChatWith()" disabled title="点一下，让 AI 持续主动陪 TA 聊天">🤖 自动聊天</button>
+          <span style="font-size:13px;color:var(--muted)">发完会像真人那样隔几秒再发下一句</span>
+        </div>
+        <details class="inner"><summary>懒得自己想？让 AI 帮我说一句</summary><div>
+          <input type="text" id="topicInput" placeholder="想聊什么（可留空，例如：问问 TA 周末安排）">
+          <div class="action-row">
+            <button class="btn-ghost" id="btnGen" onclick="aiOutreach(false)" disabled>✍️ 帮我写</button>
+            <button class="btn-primary" id="btnGenSend" onclick="aiOutreach(true)" disabled>💌 写完直接发</button>
+          </div>
+          <div class="switch-row"><label><input type="checkbox" id="humanlikeChk" checked> 像真人一样停顿一下再发（推荐）</label><label><input type="checkbox" id="affectionChk"> 这次聊完好感 +1</label></div>
+        </div></details>
+        <details class="inner"><summary>操作记录</summary><div>
+          <div class="log-box" id="logBox">暂无操作记录。</div>
+        </div></details>
       </div>
-      <div id="listenRows"></div>
-      <div class="action-row">
-        <button class="btn-ghost" onclick="addListenRow('')">＋ 添加一个好友</button>
-        <button class="btn-primary sm" onclick="saveListenList()">💾 保存名单并立即订阅</button>
-        <span id="listenStatus" class="muted-sm"></span>
+    </div>
+
+    <!-- ③ 换一个人设 -->
+    <div class="card prominent-card core-persona">
+      <div class="card-head">
+        <div class="step-num">③</div>
+        <div>
+          <div class="card-title">🎭 换一个人设 <small style="font-weight:500;color:var(--muted)">· 决定了它是谁、怎么说话</small></div>
+          <div class="card-sub">点一张卡片就换人，名字、身份、性格和说话风格整套跟着换，立刻生效</div>
+        </div>
       </div>
+      <div class="tip blue" style="margin-bottom:12px">📌 <b>人设均为虚构：</b>下面三套预设（姓名、年龄、身份、性格、经历、校园背景等）都是<b>虚构创作</b>，仅用于功能演示与娱乐，<b>不对应、不影射任何真实个人、真实班级或真实学校</b>。套用后机器人被问到「你是不是真人」时会如实说明自己是 AI 人设。</div>
+      <div class="preset-grid" id="presetGrid"><div style="color:var(--muted);font-size:13px;padding:10px">正在读取人设…</div></div>
+      <div class="tip green" style="margin-top:14px">💡 <b>怎么看这些提示词：</b>它们是给 AI 看的「怎么演这个角色」的说明书。好感度涨到不同档位，就自动换用对应那段。</div>
+      <div id="promptView"></div>
+      <details class="inner"><summary>✏️ 想自己改？展开手动编辑名字 / 性格 / 三段提示词</summary><div>
+        <div class="form-split" style="margin-top:4px">✏️ 改成你想要的</div>
+        <div class="grid-2">
+          <div><label>它叫什么名字</label><input type="text" id="botName" placeholder="例如：小夏"></div>
+          <div><label>它是什么身份</label><input type="text" id="botIdentity" placeholder="例如：在校大学生"></div>
+          <div><label>年龄</label><input type="text" id="botAge" placeholder="例如：21岁"></div>
+          <div><label>性别</label><input type="text" id="botGender" placeholder="例如：女"></div>
+        </div>
+        <div style="margin-top:12px"><label>性格一句话 <small>· 写成「温柔开朗，有点小幽默」这种大白话就行</small></label><textarea id="basePersonality" placeholder="例如：温柔开朗，有点小幽默，喜欢分享日常…"></textarea></div>
+        <div style="text-align:right;margin-top:16px"><button class="btn-primary" onclick="saveAllSettings()">💾 保存人设，立刻生效</button></div>
+        <div class="form-split">想改它的说话风格？三段话（可选）</div>
+        <div class="tip">💡 <b>说明：</b>好感 0~29 用第一段，30~79 用第二段，80 分以上用第三段。不用改也完全能用。</div>
+        <div class="stage-card stage-1"><div class="stage-header"><div class="stage-name">🌱 刚认识（客气阶段）</div><div class="stage-threshold">好感 0~29 分自动用这段</div></div>
+          <label>这个阶段它是什么感觉</label><input type="text" id="stageDesc1" style="margin-bottom:10px">
+          <label>怎么说话（直接改这段话就行）</label><textarea id="stagePrompt1" style="min-height:85px"></textarea></div>
+        <div class="stage-card stage-2"><div class="stage-header"><div class="stage-name">🍃 熟了（无话不谈）</div><div class="stage-threshold">好感 30~79 分自动用这段</div></div>
+          <label>这个阶段它是什么感觉</label><input type="text" id="stageDesc2" style="margin-bottom:10px">
+          <label>怎么说话（直接改这段话就行）</label><textarea id="stagePrompt2" style="min-height:85px"></textarea></div>
+        <div class="stage-card stage-3"><div class="stage-header"><div class="stage-name">❤️ 亲密（心动阶段）</div><div class="stage-threshold">好感 80 分以上自动用这段</div></div>
+          <label>这个阶段它是什么感觉</label><input type="text" id="stageDesc3" style="margin-bottom:10px">
+          <label>怎么说话（直接改这段话就行）</label><textarea id="stagePrompt3" style="min-height:85px"></textarea></div>
+        <div style="text-align:right;margin-top:16px"><button class="btn-primary" onclick="saveAllSettings()">💾 保存人设，立刻生效</button></div>
+      </div></details>
+    </div>
+
+  </div><!-- /#coreCards -->
+
+  <!-- ================= 其余原有设置：折叠在下面 ================= -->
+  <details class="fold" open>
+    <summary>⚙️ 更多设置与状态 <small style="font-weight:600;color:var(--muted);font-size:12.5px">运行状态 · 监听好友 · 主动聊天 · 关系进度 · 内心世界</small></summary>
+    <div class="fold-body">
+
+      <div class="card">
+        <div class="card-head"><div class="step-num green">🚦</div><div><div class="card-title">🚦 运行状态 <small style="font-weight:500;color:var(--muted)">· 一眼看懂它在干嘛</small></div><div class="card-sub">绿色 = 正在自动工作 · 黄色 = 正在连接请稍等 · 灰色 = 没在工作</div></div></div>
+        <div class="bot-status" id="botStatus">正在读取运行状态…</div>
+        <div class="stat-grid">
+          <div class="stat"><b id="stMsg">-</b><span>收到消息</span></div>
+          <div class="stat"><b id="stReply">-</b><span>自动回复</span></div>
+          <div class="stat"><b id="stMem">-</b><span>存档轮数</span></div>
+          <div class="stat"><b id="stQueue">-</b><span>排队中</span></div>
+        </div>
+        <details class="inner"><summary>这 4 个开关（保持默认即可）</summary><div>
+          <div class="switch-list">
+            <label class="switch-card" id="swAutoStart"><input type="checkbox" id="rtAutoStart" onchange="saveRuntime()"><span class="sw-txt"><b>开机自动启动（可选）</b><small>默认关闭：每次都要自己点「启动」。打开后程序一运行就自己连微信、开始回消息</small></span></label>
+            <label class="switch-card" id="swAutoReply"><input type="checkbox" id="rtAutoReply" onchange="saveRuntime()"><span class="sw-txt"><b>收到消息自动回复</b><small>有人发微信来，小助手自己想回复并发送</small></span></label>
+            <label class="switch-card" id="swAutoMemory"><input type="checkbox" id="rtAutoMemory" onchange="saveRuntime()"><span class="sw-txt"><b>聊天记录自动存档</b><small>每句话都记下来，越聊越懂对方</small></span></label>
+            <label class="switch-card" id="swAutoReconnect"><input type="checkbox" id="rtAutoReconnect" onchange="saveRuntime()"><span class="sw-txt"><b>微信掉线自动重连</b><small>网络闪断自己恢复，不用人守着</small></span></label>
+          </div>
+          <div class="action-row"><span style="font-size:13px;color:var(--muted)">连不上微信时，最多重试</span><input type="number" id="rtRetry" min="1" max="20" value="3" style="width:80px" onchange="saveRuntime()"><span style="font-size:13px;color:var(--muted)">次</span><button class="btn-ghost" onclick="saveRuntime(true)">💾 保存运行设置</button></div>
+        </div></details>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><div class="step-num amber">👥</div><div><div class="card-title">👥 监听好友 <small style="font-weight:500;color:var(--muted)">· 想让谁跟你谈恋爱，就在这里加</small></div><div class="card-sub">填微信通讯录里的昵称或备注（一个字都不能差），保存后自动生效，不用重启</div></div></div>
+        <div class="tip blue">💡 <b>这里只管「跟谁聊」：</b>聊天的性格、说话风格由上面「🎭 换一个人设」统一决定，加几行都是同一个人格。</div>
+        <div class="tip blue">💡 <b>恋爱模拟怎么用：</b>把你的<b>大号</b>昵称加进来，小号就会自动回你；聊得越用心，好感涨得越多。想同时带几个人，就多加几行。</div>
+        <div class="action-row" style="margin:12px 0">
+          <label style="font-size:14px">监听方式</label>
+          <select id="listenMode" style="width:auto"><option value="whitelist">只听名单里的人（推荐）</option><option value="all_private">所有私聊都回（陌生人也会回）</option></select>
+        </div>
+        <div id="listenRows"></div>
+        <div class="action-row">
+          <button class="btn-ghost" onclick="addListenRow('')">＋ 添加一个好友</button>
+          <button class="btn-primary" onclick="saveListenList()">💾 保存名单并立即订阅</button>
+          <span id="listenStatus" style="font-size:13px;color:var(--muted)"></span>
+        </div>
+        <details class="inner" style="margin-top:12px"><summary>昵称填不上怎么办？</summary><div>
+          昵称必须和<b>微信通讯录里显示的「昵称」或「备注」完全一致</b>，差一个字都订阅不上。保存后如果显示「没听上」，说明名字对不上 —— 打开电脑微信的通讯录，把那个人的昵称/备注原样抄下来再改一次。</div></details>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><div class="step-num teal">🤖</div><div><div class="card-title">🤖 主动找人聊天 <small style="font-weight:500;color:var(--muted)">· 不用人催，它自己开口</small></div><div class="card-sub">打开后会按你定的节奏自动挑人、自动说话；关掉就只回消息、不主动</div></div></div>
+        <div class="switch-list">
+          <label class="switch-card" id="swAutoChat"><input type="checkbox" id="autoEnabled" onchange="onAutoEnabledChange()"><span class="sw-txt"><b>允许它主动找人聊天</b><small>打开后不用再管，时间一到自己就去说话</small></span></label>
+        </div>
+        <details class="inner"><summary>细调（频率、时段、话题、找谁）</summary><div>
+          <div class="grid-2" style="margin-top:12px">
+            <div><label>每隔多少分钟主动说一次话</label><input type="number" id="autoInterval" min="1" max="1440" value="60"></div>
+            <div><label>每天最多主动说几句 <small>· 防打扰上限</small></label><input type="number" id="autoMax" min="1" max="200" value="20"></div>
+            <div><label>只在几点之后活跃 <small>· 0-23，别半夜打扰人</small></label><input type="number" id="autoStart" min="0" max="23" value="9"></div>
+            <div><label>到几点就休息 <small>· 0-24</small></label><input type="number" id="autoEnd" min="0" max="24" value="23"></div>
+          </div>
+          <div class="switch-row"><label><input type="checkbox" id="autoJitter" checked> 时间前后随机浮动一点（更像真人）</label><label><input type="checkbox" id="autoAffection" checked> 主动聊天也涨好感</label></div>
+          <label class="auto-note">它可以聊哪些话题（每行写一个，留空就让 AI 自由发挥）</label>
+          <textarea id="autoTopics" style="min-height:70px" placeholder="分享今天发生的小事&#10;问候对方吃了什么&#10;约对方周末一起做件事"></textarea>
+          <label class="auto-note">主动找谁聊（点一下选中 / 取消；也可以在上面的好友卡片里点 🤖 切换）</label>
+          <div class="target-chips" id="autoTargetChips"></div>
+          <div class="auto-status" id="autoStatus">正在读取主动聊天状态…</div>
+          <div class="action-row"><button class="btn-primary" onclick="saveAutoChat()">💾 保存主动聊天设置</button><button class="btn-ghost" id="btnAutoNow" onclick="autoChatNow()">▶️ 现在就说一句试试</button></div>
+        </div></details>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><div class="step-num pink">❤️</div><div><div class="card-title">❤️ 关系进度 <small style="font-weight:500;color:var(--muted)">· 好感到了，说话自然变亲密</small></div><div class="card-sub">好感会自己涨（0~29 相识 / 30~79 相知 / 80+ 相恋）；你也可以手动拖进度条</div></div></div>
+        <details class="inner"><summary>展开看每个人的好感度（不想改就别动）</summary><div>
+          <div id="usersContainer"></div>
+        </div></details>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><div class="step-num pink">💗</div><div><div class="card-title">💗 内心世界 <small style="font-weight:500;color:var(--muted)">· 它此刻的心情、精力和记得的事</small></div><div class="card-sub">不是配置，是它自己攒出来的状态：聊得越多越准，删除记忆请用下方「忘记」</div></div></div>
+        <details class="inner" open><summary>看它心里在想什么</summary><div>
+          <div class="stat-grid">
+            <div class="stat"><b id="mindMood">-</b><span>此刻心情</span></div>
+            <div class="stat"><b id="mindEnergy">-</b><span>精力</span></div>
+            <div class="stat"><b id="mindEnergyBar">-</b><span>状态</span></div>
+            <div class="stat"><b id="mindWilling">-</b><span>说话意愿</span></div>
+            <div class="stat"><b id="mindFact">-</b><span>记住的事</span></div>
+            <div class="stat"><b id="mindEpis">-</b><span>共同经历</span></div>
+          </div>
+          <div class="grid-2" style="margin-top:14px">
+            <div><label>对这段关系的感觉 <small>· 会随聊天自然变化</small></label><div id="mindRelBar" style="font-size:13px;color:var(--muted)">先选一个聊天对象</div></div>
+            <div><label>性格倾向 <small>· 只影响说话方式，不改人设</small></label><div id="mindPersona" style="font-size:13px;color:var(--muted)">先选一个聊天对象</div></div>
+          </div>
+          <div class="target-panel mind-panel" style="margin-top:14px">
+            <label>它刚刚脑子里想的事 <small>· 没人说话时它也会自己想一想</small></label>
+            <div class="log-box" id="mindThoughts" style="max-height:120px">正在读取…</div>
+            <label style="margin-top:12px">它记住的事 <small>· 点右侧「忘记」可以让它忘掉这一条</small></label>
+            <div class="log-box" id="mindMemory" style="max-height:150px">正在读取…</div>
+            <label style="margin-top:12px">安静时段（作息表）<small>· 这段时间它不会主动打扰对方</small></label>
+            <details class="inner"><summary>作息表（一般不用改）</summary><div>
+              <div class="grid-2">
+                <div><label>静默开始</label><input type="text" id="mindQs" placeholder="23:30"></div>
+                <div><label>静默结束</label><input type="text" id="mindQe" placeholder="07:30"></div>
+              </div>
+              <div class="action-row" style="margin-top:12px">
+                <button class="btn-ghost" onclick="mindReflect()">💭 让它现在想想</button>
+                <button class="btn-ghost" onclick="saveMindSchedule()">🕐 保存作息</button>
+                <button class="btn-ghost" onclick="mindForgetAll()">🗑 彻底忘掉这个人</button>
+                <span id="mindStatus" style="font-size:13px;color:var(--muted)"></span>
+              </div>
+            </div></details>
+          </div>
+          <div class="tip" style="margin-top:12px">💡 <b>怎么用：</b>这里全是它自己攒的，不用手填。心情和精力会随着聊天起伏，记忆是长期记住的事；关系阶段仍然只看上面的好感度，它自己不会跳阶段。</div>
+        </div></details>
+      </div>
+
     </div>
   </details>
 
-  <!-- ================= 主动聊天 ================= -->
-  <details class="section">
-    <summary><span class="sec-icon">🤖</span> 主动找人聊天 <small>· 不用人催，它自己开口</small></summary>
-    <div class="section-body">
-      <label class="switch-card" id="swAutoChat"><input type="checkbox" id="autoEnabled" onchange="onAutoEnabledChange()"><span class="sw-txt"><b>允许它主动找人聊天</b><small>打开后按你定的节奏自动挑人、自动说话</small></span></label>
-      <div class="grid-2" style="margin-top:14px">
-        <div><label>每隔多少分钟主动说一次</label><input type="number" id="autoInterval" min="1" max="1440" value="60"></div>
-        <div><label>每天最多主动说几句</label><input type="number" id="autoMax" min="1" max="200" value="20"></div>
-        <div><label>只在几点之后活跃</label><input type="number" id="autoStart" min="0" max="23" value="9"></div>
-        <div><label>到几点就休息</label><input type="number" id="autoEnd" min="0" max="24" value="23"></div>
-      </div>
-      <div class="switch-row">
-        <label class="chk"><input type="checkbox" id="autoJitter" checked> 时间前后随机浮动一点（更像真人）</label>
-        <label class="chk"><input type="checkbox" id="autoAffection" checked> 主动聊天也涨好感</label>
-      </div>
-      <label style="margin-top:12px">它可以聊哪些话题（每行一个，留空让 AI 自由发挥）</label>
-      <textarea id="autoTopics" style="min-height:70px" placeholder="分享今天发生的小事&#10;问候对方吃了什么&#10;约对方周末一起做件事"></textarea>
-      <label style="margin-top:12px">主动找谁聊（点一下选中 / 取消）</label>
-      <div class="target-chips" id="autoTargetChips"></div>
-      <div class="auto-status" id="autoStatus">正在读取主动聊天状态…</div>
-      <div class="action-row">
-        <button class="btn-primary sm" onclick="saveAutoChat()">💾 保存主动聊天设置</button>
-        <button class="btn-ghost" id="btnAutoNow" onclick="autoChatNow()">▶️ 现在就说一句试试</button>
-      </div>
-    </div>
-  </details>
-
-  <!-- ================= 关系进度 ================= -->
-  <details class="section">
-    <summary><span class="sec-icon">❤️</span> 关系进度 <small>· 好感 0~29 相识 / 30~79 相知 / 80+ 相恋</small></summary>
-    <div class="section-body">
-      <div id="usersContainer"><div class="empty-mini">正在读取…</div></div>
-    </div>
-  </details>
-
-  <!-- ================= 内心世界 ================= -->
-  <details class="section">
-    <summary><span class="sec-icon">💗</span> 内心世界 <small>· 它此刻的心情、精力和记得的事</small></summary>
-    <div class="section-body">
-      <div class="stat-grid">
-        <div class="stat"><b id="mindMood">-</b><span>此刻心情</span></div>
-        <div class="stat"><b id="mindEnergy">-</b><span>精力</span></div>
-        <div class="stat"><b id="mindEnergyBar">-</b><span>状态</span></div>
-        <div class="stat"><b id="mindWilling">-</b><span>说话意愿</span></div>
-        <div class="stat"><b id="mindFact">-</b><span>记住的事</span></div>
-        <div class="stat"><b id="mindEpis">-</b><span>共同经历</span></div>
-      </div>
-      <div class="grid-2" style="margin-top:14px">
-        <div><label>对这段关系的感觉</label><div id="mindRelBar" class="muted-sm">正在读取…</div></div>
-        <div><label>性格倾向</label><div id="mindPersona" class="muted-sm">正在读取…</div></div>
-      </div>
-      <label style="margin-top:14px">它刚刚脑子里想的事</label>
-      <div class="log-box" id="mindThoughts" style="max-height:120px">正在读取…</div>
-      <label style="margin-top:12px">它记住的事（点「忘记」可以让它忘掉这一条）</label>
-      <div class="log-box" id="mindMemory" style="max-height:150px">正在读取…</div>
-      <label style="margin-top:12px">安静时段（这段时间它不会主动打扰对方）</label>
-      <div class="grid-2">
-        <div><label>静默开始</label><input type="text" id="mindQs" placeholder="23:30"></div>
-        <div><label>静默结束</label><input type="text" id="mindQe" placeholder="07:30"></div>
-      </div>
-      <div class="action-row">
-        <button class="btn-ghost" onclick="mindReflect()">💭 让它现在想想</button>
-        <button class="btn-ghost" onclick="saveMindSchedule()">🕐 保存作息</button>
-        <button class="btn-ghost danger" onclick="mindForgetAll()">🗑 彻底忘掉这个人</button>
-        <span id="mindStatus" class="muted-sm"></span>
-      </div>
-    </div>
-  </details>
-
-  <!-- ================= 操作记录 ================= -->
-  <details class="section">
-    <summary><span class="sec-icon">📋</span> 操作记录</summary>
-    <div class="section-body">
-      <div class="log-box" id="logBox">暂无操作记录。</div>
-    </div>
-  </details>
-
-  <div class="footer-note">微信聊天小助手 · 设置自动保存 · 关掉程序窗口即停止自动回复</div>
+  <div class="footer-note">微信聊天小助手 · 所有设置自动保存，重启也不丢 · 关掉程序窗口即停止自动回复</div>
 </div>
 
-<!-- ================= 抽屉：AI 大脑 ================= -->
-<div class="drawer-mask" id="drawerMask" onclick="closeDrawer()"></div>
-
-<aside class="drawer" id="drawerBrain" data-drawer="brain">
-  <header class="drawer-head">
-    <div><h3>🧠 AI 大脑</h3><p>换模型、填密钥都在这里</p></div>
-    <button class="drawer-close" onclick="closeDrawer()">✕</button>
-  </header>
-  <div class="drawer-body">
-    <div class="tip blue">💡 所有自动回复都由这里选中的模型来想。换模型 = 换一个更聪明 / 更便宜 / 本地运行的大脑。</div>
-    <label>正在使用的大脑</label>
-    <select id="llmSelect" onchange="switchLLM()"><option value="">正在读取…</option></select>
-    <div class="grid-2" style="margin-top:14px">
-      <div><label>大脑名字 <small>· 给自己看的备注</small></label><input type="text" id="llmName" placeholder="例如：云端大模型"></div>
-      <div><label>模型名称 Model</label><input type="text" id="llmModel" placeholder="例如：deepseek-chat"></div>
-    </div>
-    <div style="margin-top:14px"><label>接口地址 Base URL</label><input type="text" id="llmBaseUrl" placeholder="https://…/v1"></div>
-    <div class="grid-2" style="margin-top:14px">
-      <div><label>密钥 API Key</label><input type="text" id="llmApiKey" placeholder="sk-…"><small id="llmKeyHint" class="key-hint" style="display:none"></small></div>
-      <div><label>说话风格 <small>· 0.1 老实 ~ 1.5 放飞</small></label><input type="text" id="llmTemp" placeholder="例如：1.0"></div>
-    </div>
-    <div class="action-row">
-      <button class="btn-primary sm" onclick="saveLLM()">💾 保存大脑设置</button>
-      <button class="btn-ghost" onclick="loadLLM()">↻ 重新读取</button>
-      <span id="llmStatus" class="muted-sm"></span>
-    </div>
-  </div>
-</aside>
-
-<!-- ================= 抽屉：人设 ================= -->
-<aside class="drawer drawer-wide" id="drawerPersona" data-drawer="persona">
-  <header class="drawer-head">
-    <div><h3>🎭 挑一个人设</h3><p>先点一张顺眼的卡片，也可以直接改</p></div>
-    <button class="drawer-close" onclick="closeDrawer()">✕</button>
-  </header>
-  <div class="drawer-body">
-    <div class="tip">📌 <b>人设均为虚构：</b>下面这些姓名、年龄、身份、性格、经历、校园背景都是<b>虚构创作</b>，仅用于功能演示与娱乐，不对应、不影射任何真实个人。</div>
-    <div class="preset-grid" id="presetGrid"><div class="empty-mini">正在读取人设…</div></div>
-    <div class="form-split">✏️ 改成你想要的</div>
-    <div class="grid-2">
-      <div><label>它叫什么名字</label><input type="text" id="botName" placeholder="例如：小夏"></div>
-      <div><label>它是什么身份</label><input type="text" id="botIdentity" placeholder="例如：在校大学生"></div>
-      <div><label>年龄</label><input type="text" id="botAge" placeholder="例如：21岁"></div>
-      <div><label>性别</label><input type="text" id="botGender" placeholder="例如：女"></div>
-    </div>
-    <div style="margin-top:14px"><label>性格一句话</label><textarea id="basePersonality" placeholder="例如：温柔开朗，有点小幽默，喜欢分享日常…"></textarea></div>
-    <details class="inner">
-      <summary>想改它的说话风格？展开三段话（可选）</summary>
-      <div class="tip">💡 好感 0~29 用第一段，30~79 用第二段，80 分以上用第三段。不用改也完全能用。</div>
-      <div class="stage-card stage-1"><div class="stage-header"><div class="stage-name">🌱 刚认识（客气阶段）</div><div class="stage-threshold">好感 0~29 分</div></div>
-        <label>这个阶段它是什么感觉</label><input type="text" id="stageDesc1">
-        <label>怎么说话</label><textarea id="stagePrompt1" style="min-height:85px"></textarea></div>
-      <div class="stage-card stage-2"><div class="stage-header"><div class="stage-name">🍃 熟了（无话不谈）</div><div class="stage-threshold">好感 30~79 分</div></div>
-        <label>这个阶段它是什么感觉</label><input type="text" id="stageDesc2">
-        <label>怎么说话</label><textarea id="stagePrompt2" style="min-height:85px"></textarea></div>
-      <div class="stage-card stage-3"><div class="stage-header"><div class="stage-name">❤️ 亲密（心动阶段）</div><div class="stage-threshold">好感 80 分以上</div></div>
-        <label>这个阶段它是什么感觉</label><input type="text" id="stageDesc3">
-        <label>怎么说话</label><textarea id="stagePrompt3" style="min-height:85px"></textarea></div>
-    </details>
-    <details class="inner">
-      <summary>查看当前生效的完整提示词</summary>
-      <div id="promptView"></div>
-    </details>
-    <div class="action-row">
-      <button class="btn-primary sm" onclick="saveAllSettings()">💾 保存人设，立刻生效</button>
-      <span class="muted-sm">保存后所有人、所有入口都用这一套</span>
-    </div>
-  </div>
-</aside>
-
 <div id="toast" class="toast">已保存！</div>
-
+<button class="back-top" id="backTop" title="返回顶部">↑</button>
 <script src="/static/js/app.js"></script>
 <script src="/static/js/theme.js"></script>
-<button class="back-top" id="backTop" title="返回顶部">↑</button>
 </body>
 </html>

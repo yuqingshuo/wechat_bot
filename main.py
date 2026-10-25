@@ -518,7 +518,7 @@ def get_default_persona():
                           "- 会开玩笑，也接得住别人开你玩"
             },
             "3": {
-                "name": "相恋",
+                "name": "相爱",
                 "threshold": 80,
                 "description": "在一起了。说话更软更黏，但撒娇不腻歪。",
                 "prompt": "你们在一起了，你说话会更软一点，也更黏人。\n"
@@ -719,7 +719,7 @@ _AFF_PERFUNCTORY = ("嗯", "哦", "呃", "额", "啊", "呵", "ok", "OK", "哦�
 # 冷淡 / 推开：出现这些要扣分
 _AFF_COLD_WORDS = (
     "随便", "算了", "无所", "不想", "别烦", "没意", "算了不用", "不用",
-    "懒得", "不想", "没心", "别找", "",
+    "懒得", "没心", "别找",
 )
 # 明显的积极信
 _AFF_LAUGH_WORDS = ("哈哈", "笑死", "hhh", "233", "嘻嘻", "嘿嘿", "呜呜", "awsl", "emmm", "emm")
@@ -766,7 +766,7 @@ def score_affection_delta(text, cur_aff=0):
         reasons.append(u"主动问了你的情况。")
 
     for w in _AFF_COLD_WORDS:
-        if w in t:
+        if w and w in t:   # w and：防空字符串（空串 in 任何文本恒为真，会误伤所有人）
             delta -= 3
             reasons.append(u"说了「%s」这种推开人的话。" % w)
             break
@@ -869,7 +869,62 @@ def remember_bot_message(user_id, text):
     history = chat_histories.get(user_id, [])
     history.append({"role": "assistant", "content": text})
     chat_histories[user_id] = history[-max_msgs:]
+    record_sent_message(user_id, text)
     save_histories()
+
+
+# =============================================================================
+# 回弹过滤：wechatauto 会把机器人自己发的消息当成对方消息推送回来（库里 attr
+# 的自我判定在该账号 DB 上不命中，on_message 里 msg_attr=='self' 拦不住）。
+# 不拦的后果：机器人自己跟自己聊，每轮都写进历史，真人一开口上下文全是自我
+# 对话——表现为「回复前后不搭」。这里按最近发送内容做比对，不依赖 attr。
+# =============================================================================
+_RECENT_SENT = {}            # user_id -> [(text, ts), ...]
+_RECENT_SENT_TTL = 120.0     # 只认最近两分钟内发出去的
+_RECENT_SENT_MAX = 12        # 每人最多留几条
+
+
+def _norm_text(text):
+    """比对用归一化：去掉所有空白。回弹时格式常有细微差异（换段、空格）。"""
+    return re.sub(r"\s+", "", str(text or ""))
+
+
+def record_sent_message(user_id, text):
+    """机器人成功发出消息后调用：记入最近发送列表，供回弹过滤比对。"""
+    text = (text or "").strip()
+    if not text:
+        return
+    now = time.time()
+    with history_lock:
+        items = [it for it in _RECENT_SENT.get(user_id, [])
+                 if now - it[1] < _RECENT_SENT_TTL]
+        items.append((text, now))
+        _RECENT_SENT[user_id] = items[-_RECENT_SENT_MAX:]
+
+
+def is_echo_of_sent(user_id, text):
+    """判断这条「收到的消息」是不是机器人自己刚发出去的回弹。
+
+    归一化后与某条近期发送完全相等，或互为子串（分段发送时，回弹可能被
+    合并成一条或拆成不同条数）。短消息（不足 6 字）只认全等，避免误伤。
+    """
+    norm = _norm_text(text)
+    if not norm:
+        return False
+    now = time.time()
+    with history_lock:
+        items = list(_RECENT_SENT.get(user_id, []))
+    for sent_text, ts in items:
+        if now - ts >= _RECENT_SENT_TTL:
+            continue
+        ns = _norm_text(sent_text)
+        if not ns:
+            continue
+        if norm == ns:
+            return True
+        if len(norm) >= 6 and len(ns) >= 6 and (norm in ns or ns in norm):
+            return True
+    return False
 
 
 # =============================================================================
@@ -1492,6 +1547,7 @@ def queue_worker(wx):
                     with bot_state_lock:
                         bot_state["memory_rounds"] = bot_state.get("memory_rounds", 0) + 1
                 send_humanlike_reply(wx, u_id, reply)
+                record_sent_message(u_id, reply)
                 with bot_state_lock:
                     bot_state["replies_sent"] = bot_state.get("replies_sent", 0) + 1
                     bot_state["last_reply_at"] = time.time()
@@ -1585,6 +1641,13 @@ def make_msg_handler(wx):
             if dedupe_guard.is_duplicate(who, final_content):
                 logger.info(f"忽略重复消息（{who}）：{final_content[:30]}")
                 push_activity("忽略重复", who, final_content, False)
+                return
+
+            # 回弹过滤：机器人自己发的消息会被监听回调当成对方消息收回来。
+            # 不拦的话它会自己跟自己聊，污染历史上下文（回复前后不搭的根因）。
+            if is_echo_of_sent(who, final_content):
+                logger.info(f"忽略自己消息的回弹（{who}）：{final_content[:30]}")
+                push_activity("忽略回弹", who, final_content, False)
                 return
 
             logger.info(f"收到 [{who}] 消息: {final_content}")
@@ -1823,7 +1886,7 @@ def describe_context(ctx):
 # ==============================================================================
 # 好友选择 · 手动发消息 / AI 主动搭话
 # ==============================================================================
-STAGE_NAME_MAP = {"1": "相识", "2": "相知", "3": "相恋"}
+STAGE_NAME_MAP = {"1": "相识", "2": "相知", "3": "相爱"}
 
 def get_wx():
     """获取当前已连接的微信客户端（未连接时返回 None）。"""
@@ -3188,14 +3251,6 @@ py_logging.getLogger('werkzeug').setLevel(py_logging.WARNING)
 def web_index():
     return render_template('index.html')
 
-
-@app.route('/run')
-@app.route('/run/')
-def web_run():
-    """独立的「启动 / 停止」控制台，不和配置页面混在一起。"""
-    return render_template('run.html')
-
-
 @app.route('/api/get_persona', methods=['GET'])
 def api_get_persona():
     with persona_lock:
@@ -3323,73 +3378,6 @@ def api_get_contacts():
     except Exception as e:
         logger.error(f"获取好友列表出错: {e}", exc_info=True)
         return jsonify({"ok": False, "msg": str(e), "contacts": [], "logs": []})
-
-@app.route('/api/chat/stream', methods=['GET'])
-def api_chat_stream():
-    """「跟随聊天」面板的数据源：返回某个好友最近的聊天流水（时间正序）。
-
-    优先读微信本地库里的真实双向记录（对方和机器人说的话都能看到），
-    微信没连上时退回机器人自己的对话记忆（只有机器人记得的那部分）。
-    """
-    try:
-        user_id = (request.args.get("user_id") or "").strip()
-        wx = get_wx()
-        if not user_id:
-            return jsonify({"ok": True, "user_id": "", "source": "none",
-                            "wx_online": wx is not None, "messages": []})
-        try:
-            limit = max(6, min(80, int(request.args.get("limit") or 30)))
-        except (TypeError, ValueError):
-            limit = 30
-
-        messages = []
-        source = "none"
-        if wx is not None:
-            ctx = fetch_wechat_context(user_id, limit=limit)
-            for item in (ctx.get("messages") or []):
-                text = (item.get("text") or "").strip()
-                if not text:
-                    continue
-                messages.append({
-                    "role": "bot" if item.get("mine") else "friend",
-                    "text": text,
-                    "time": item.get("time") or "",
-                })
-            if messages:
-                source = "wechat"
-
-        if not messages:
-            for m in (chat_histories.get(user_id) or [])[-limit:]:
-                text = (m.get("content") or "").strip()
-                if not text:
-                    continue
-                messages.append({
-                    "role": "bot" if m.get("role") == "assistant" else "friend",
-                    "text": text,
-                    "time": "",
-                })
-            if messages:
-                source = "memory"
-
-        with persona_lock:
-            users_snapshot = dict(persona_data.get("users") or {})
-        u = users_snapshot.get(user_id) or {}
-        aff, stage_key, _force = peek_user_stage(user_id)
-        return jsonify({
-            "ok": True,
-            "user_id": user_id,
-            "source": source,
-            "wx_online": wx is not None,
-            "messages": messages,
-            "affection": aff,
-            "stage": stage_key,
-            "stage_name": STAGE_NAME_MAP.get(stage_key, "相识"),
-            "chat_count": u.get("chat_count", 0),
-        })
-    except Exception as e:
-        logger.error(f"读取聊天流水出错：{e}", exc_info=True)
-        return jsonify({"ok": False, "msg": str(e), "messages": []})
-
 
 @app.route('/api/send_message', methods=['POST'])
 def api_send_message():
@@ -4063,7 +4051,7 @@ def main():
             logger.info("检测到已开启开机自动启动：立即自动连接微信并进入全自动运行模式...")
         start_bot(background=True)
     else:
-        logger.info("未开启开机自动启动：请打开「启动控制台」(/run)，点击「启动机器人」后才开始工作。")
+        logger.info("未开启开机自动启动：请打开网页控制台，点击「启动机器人」后才开始工作。")
 
     logger.info("程序已就绪并持续运行中（自动监听 + 自动回复）；按 Ctrl+C 可安全退出。")
     try:

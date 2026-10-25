@@ -29,9 +29,19 @@ selftest_err.txt
 selftest_report.txt
 *.tmp
 
-# 备份文件
+# 备份文件（含带日期后缀的，如 chat_histories.json.bak-20261025，
+# 里面是真实聊天记录/好感度记忆，属隐私，绝不能上传）
 main.py.bak*
 *.bak
+*.bak-*
+*.bak2
+*.orig
+
+# 调试残留（临时脚本 / HTML 转储，含硬编码本机路径）
+check_*.py
+count.py
+restore.py
+html_*.txt
 
 # =============================================================================
 # Python

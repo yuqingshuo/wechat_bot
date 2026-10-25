@@ -177,7 +177,7 @@ class Mind(object):
         marks = ((1, u"第一次认真聊天", "affection_1"),
                  (30, u"好感度到 30，关系走进「相知」", "affection_30"),
                  (60, u"好感度过半", "affection_60"),
-                 (80, u"好感度到 80，关系走进「相恋」", "affection_80"))
+                 (80, u"好感度到 80，关系走进「相爱」", "affection_80"))
         for mark, text, key in marks:
             if affection >= mark and self.record_milestone(user_id, key, text):
                 newly.append(text)
